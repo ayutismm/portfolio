@@ -48,18 +48,21 @@ const CORNER_RADIUS = 0.11
   track that within a couple of percent. Pushing DEPTH_POW higher makes the end
   cards loom at the camera instead of receding into the blur.
 */
-const SLOT_W = 1.65
-const DEPTH = 1.15
+const SLOT_W = 1.55
+const DEPTH = 0.9
 const DEPTH_POW = 1.3
 
 /*
-  Rotation is deliberately NOT the arc's tangent. Lying the cards flush on a
-  curve this tight would turn the ends ~50° and squash them into slivers, while
-  the reference keeps every card close to face-on. FAN_RATIO scales the tangent
-  down to a hint of a turn — small enough to stay readable, but enough to put
-  each card's *outer* edge nearer the camera, which is what sells the curve.
+  Rotation follows the arc's surface normal: each card lies on the curved
+  surface, so only the centre card faces the viewer head-on and the side cards
+  angle inward toward the centre of the row — the "spokes of a wheel" read.
+  The surface normal of the curve z = DEPTH·|s|^DEPTH_POW is atan(slope) off
+  the +Z axis, which would put the ends ~50° and squish them into slivers.
+  FAN_RATIO scales that back so the turn is clearly visible but the screens
+  stay readable; the outer edge of every card still leads toward the camera,
+  which is what sells the curve.
 */
-const FAN_RATIO = 0.26
+const FAN_RATIO = 0.7
 
 /*
   Slot count. Enough to cover the viewport (|s| ≲ 3.2) plus the fade band, so
@@ -67,8 +70,8 @@ const FAN_RATIO = 0.26
   more slots rather than repeated textures.
 */
 const SLOTS_MIN = 11
-const FADE_FROM = 2.4 // fully opaque up to here
-const FADE_TO = 3.6 // gone by here
+const FADE_FROM = 1.8 // first 2 cards on each side stay fully opaque
+const FADE_TO = 3.8 // outer cards fade gradually into the edges
 
 // Idle drift and scroll response, both in slots (one slot = one card step).
 const DRIFT_PER_SEC = 0.16
@@ -76,8 +79,8 @@ const SLOTS_PER_VIEWPORT = 2.5
 
 // Camera distance. 11 frames ~6.7 units of height at the centre card; narrow
 // viewports pull back so the row still reads as a row instead of one phone.
-const CAM_Z_WIDE = 12.5
-const CAM_Z_NARROW = 16
+const CAM_Z_WIDE = 11
+const CAM_Z_NARROW = 15
 
 const VERT = /* glsl */ `
   varying vec2 vUv;
@@ -136,9 +139,11 @@ export function createCarousel(canvas, { images }) {
   // stage → tilts with the pointer;  row → slides.
   const stage = new THREE.Group()
   const row = new THREE.Group()
-  // Nudge the row up so the cards sit in the upper-middle of the viewport,
-  // leaving room for the character's legs and explore cue at the bottom.
-  row.position.y = 0.55
+  
+  // Position the row in the upper-middle of the viewport so cards sit
+  // behind the character's torso area, matching the reference. Sits a touch
+  // lower than centre so the row clears the smaller heading above it.
+  row.position.y = 0.15
   stage.add(row)
   scene.add(stage)
 
@@ -199,15 +204,13 @@ export function createCarousel(canvas, { images }) {
     mesh.material.uniforms.uOpacity.value = fade
 
     mesh.position.x = s * SLOT_W
-    // Convex arc: negative Z pushes the outer cards backward so they
-    // appear smaller and farther away, matching the reference depth.
-    mesh.position.z = -DEPTH * a ** DEPTH_POW
+    // Concave arc: positive Z pulls outer cards FORWARD toward the camera.
+    mesh.position.z = DEPTH * a ** DEPTH_POW
 
     // Slope magnitude for the rotation
     const slope = (DEPTH * DEPTH_POW * a ** (DEPTH_POW - 1)) / SLOT_W
     /*
-      Negative rotation turns a card right of centre so its left edge goes back
-      and it faces outwards, matching the text fan.
+      Cards face slightly outward so each card's face stays readable.
     */
     mesh.rotation.y = -Math.sign(s) * Math.atan(slope) * FAN_RATIO
   }

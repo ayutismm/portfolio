@@ -99,6 +99,10 @@
   transform: rotateX(calc(var(--hero-cursor-y, 0) * -6deg))
     rotateY(calc(var(--hero-cursor-x, 0) * 9deg));
   transform-origin: 50% 64%;
+  /* Keep the layers (and the title's glyphs within them) in the same 3D space
+     as this tilt, so the title's per-glyph translateZ bends with the scene
+     instead of being flattened back into this plane. */
+  transform-style: preserve-3d;
   will-change: transform;
 }
 
@@ -131,6 +135,8 @@
 .layerTitle {
   z-index: 3;
   transform: translate3d(calc(var(--hero-cursor-x, 0) * 18px), calc(var(--hero-cursor-y, 0) * 16px), 0);
+  /* Pass the hero perspective through to the glyphs' translateZ. */
+  transform-style: preserve-3d;
 }
 
 .layerAside {
@@ -147,9 +153,8 @@
 
 .title {
   position: absolute;
-  /* Well below the header with generous breathing room. 
-     Using clamp(4.5rem...) keeps it clear of the 76px header on mobile. */
-  top: clamp(4.5rem, 9vh, 7rem);
+  /* Positioned in the upper-middle, below the header with breathing room. */
+  top: clamp(4.5rem, 8vh, 7rem);
   left: 50%;
   transform: translateX(-50%);
   z-index: 3;
@@ -166,6 +171,10 @@
   letter-spacing: var(--tracking-tight);
   color: var(--ink);
   white-space: nowrap;
+  /* Keep the glyphs' translateZ in the scene. (While opacity is < 1 the spec
+     forces flattening, but the entrance tween lifts opacity to 1 in 0.1s, so
+     the 3D depth is live for the whole staggered rise.) */
+  transform-style: preserve-3d;
 }
 
 .titleInner {
@@ -173,11 +182,16 @@
   align-items: flex-end;
   /* Clip the char rise-in without hiding the arc's vertical offsets. */
   padding-bottom: 0.12em;
+  /* Flex container must also preserve 3D or the glyph depths collapse. */
+  transform-style: preserve-3d;
 }
 
 .titleChar {
   display: inline-block;
-  transform: rotate(var(--rot)) translateY(var(--dy));
+  /* The depth (translateZ) and tangent yaw (rotateY) are appended after the
+     existing arch transforms so the glyph drops for the arc, then travels into
+     the scene; both are in the hero's perspective via the preserve-3d chain. */
+  transform: rotate(var(--rot)) translateY(var(--dy)) translateZ(var(--dz)) rotateY(var(--rotY));
   transform-origin: center bottom;
   will-change: transform;
 }
@@ -193,12 +207,11 @@
   position: absolute;
   left: 50%;
   /* Anchored to the bottom so feet sit near the explore cue. */
-  bottom: clamp(2rem, 4vh, 3.5rem);
+  bottom: clamp(1.5rem, 3vh, 3rem);
   transform: translateX(-50%);
   z-index: 4;
-  /* Slightly smaller so the full figure fits with breathing room above
-     and below, matching the reference proportions. */
-  height: clamp(340px, 66vh, 700px);
+  /* Large enough to dominate vertically but leave room for the title above. */
+  height: clamp(340px, 70vh, 750px);
   width: auto;
   /* Subtle grounding shadow so the figure doesn't float over the wheel. */
   filter: drop-shadow(0 26px 34px rgb(0 0 0 / 0.16));
@@ -210,11 +223,11 @@
   position: absolute;
   left: 0;
   right: 0;
-  bottom: clamp(14%, 22vh, 28%);
+  bottom: clamp(12%, 18vh, 24%);
   z-index: 3;
   display: flex;
   justify-content: space-between;
-  padding: 0 clamp(1.5rem, 8vw, 9rem);
+  padding: 0 clamp(1.5rem, 8vw, 10rem);
   font-family: var(--font-alt);
   font-size: clamp(0.7rem, 1.15vw, 1.05rem);
   font-weight: 700;

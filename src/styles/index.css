@@ -36,7 +36,7 @@
   --fs-md: clamp(1rem, 1.4vw, 1.25rem);
   --fs-lg: clamp(1.5rem, 3vw, 2.5rem);
   --fs-xl: clamp(2rem, 5vw, 4rem);
-  --fs-hero: clamp(1.75rem, 8vw, 8rem); /* the big display title */
+  --fs-hero: clamp(1.75rem, 6.5vw, 7.5rem); /* large display title */
 
   --tracking-tight: -0.02em;
   --tracking-wide: 0.08em;

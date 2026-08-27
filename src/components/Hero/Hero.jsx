@@ -11,13 +11,33 @@ import styles from './Hero.module.css'
   the line plus a quadratic vertical nudge, which reads as the reference's
   kinetic distortion while staying plain DOM text (selectable, accessible, and
   far easier to retitle than baked WebGL type).
+
+  On top of that 2D arch, every glyph is pushed along the Z axis by a depth
+  curve that mirrors the carousel row in utils/three-helpers.js
+  (z = DEPTH * |slot| ** DEPTH_POW). The carousel is CONCAVE — the centre card
+  sits deepest while the cards sweep forward toward the camera at the edges —
+  so the title conforms to the same surface: the middle glyphs stay at the
+  title's layout plane and the outer glyphs travel toward the viewer. Depth is
+  in em so it scales with the fluid type size.
 */
-const FAN_DEGREES = 8 // rotation at the line's extremes
-const ARC_DEPTH = 0.14 // em of vertical arc at the extremes
+const FAN_DEGREES = 8 // outward fan at the extremes
+const ARC_DEPTH = 0.18 // convex arch depth
+const DEPTH_Z = 0.9 // max Z travel at the extremes, in em (toward the camera)
+const DEPTH_POW = 1.3 // matches the carousel row's exponent
+// Approx glyph advance (em) for the display face at --tracking-tight. Turns
+// the depth slope below into a real tangent angle rather than an arbitrary fan.
+const GLYPH_W = 0.6
+// The carousel lies its cards on the curved surface (FAN_RATIO in
+// three-helpers.js); the title glyphs get the same treatment so the title
+// conforms to the carousel's geometry, not a separate flat fan.
+const FAN_RATIO = 0.7
 
 function ArcedTitle({ text }) {
   const chars = [...text]
   const last = Math.max(1, chars.length - 1)
+  // Horizontal half-width of the line in em, so the tangent is a slope in the
+  // same units as the depth instead of a dimensionless index.
+  const halfWidth = (last * GLYPH_W) / 2
 
   return (
     <span className={styles.titleInner}>
@@ -25,16 +45,28 @@ function ArcedTitle({ text }) {
         const c = (i / last) * 2 - 1 // -1 → +1 across the line
         // Fan outwards: left chars lean left (-), right chars lean right (+)
         const rotate = c * FAN_DEGREES
-        // Convex arch (∩): center chars are high (dy=0), edge chars drop down
-        // (positive dy), exactly matching the 'BRAND DESIGN' reference.
+        // Convex arch (∩): center is high (dy≈0), edges drop down (positive dy)
         const dy = c * c * ARC_DEPTH
+        // Concave depth, matching the carousel: the centre sits deepest and the
+        // outer glyphs come forward by DEPTH_Z * |c| ** DEPTH_POW.
+        const dz = DEPTH_Z * Math.abs(c) ** DEPTH_POW
+        // Tangent of the depth curve in the horizontal plane → per-glyph yaw.
+        // The sign flips so each glyph's OUTER edge turns toward the camera,
+        // exactly like the carousel's cards (rotation.y = -sign(s) * atan(slope)).
+        const slope = (DEPTH_Z * DEPTH_POW * Math.abs(c) ** (DEPTH_POW - 1)) / halfWidth
+        const rotY = -Math.sign(c) * Math.atan(slope) * FAN_RATIO
         const isSpace = ch === ' '
         return (
           <span
             key={`${ch}-${i}`}
             className={styles.titleChar}
             data-space={isSpace ? '' : undefined}
-            style={{ '--rot': `${rotate}deg`, '--dy': `${dy}em` }}
+            style={{
+              '--rot': `${rotate}deg`,
+              '--dy': `${dy}em`,
+              '--dz': `${dz}em`,
+              '--rotY': `${rotY}rad`,
+            }}
           >
             {ch === ' ' ? ' ' : ch}
           </span>
