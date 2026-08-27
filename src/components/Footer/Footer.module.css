@@ -1,0 +1,150 @@
+.reveal {
+  position: relative;
+  z-index: 20;
+  background: var(--ink);
+}
+
+/*
+  Reveal: the three columns rise and fade in once the panel is a third visible,
+  staggered left → centre → right. Transform/opacity only, so it composites.
+  `.revealed` is added by Footer once its IntersectionObserver fires.
+*/
+.contact,
+.logoWrap,
+.year {
+  opacity: 0;
+  transform: translateY(26px);
+  transition:
+    opacity var(--dur-slow) var(--ease-out),
+    transform var(--dur-slow) var(--ease-out);
+}
+
+.revealed .contact,
+.revealed .logoWrap,
+.revealed .year {
+  opacity: 1;
+  transform: none;
+}
+
+.revealed .logoWrap {
+  transition-delay: 90ms;
+}
+
+.revealed .year {
+  transition-delay: 180ms;
+}
+
+/* Nothing to reveal if the visitor asked for stillness. */
+@media (prefers-reduced-motion: reduce) {
+  .contact,
+  .logoWrap,
+  .year {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+.footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(1.5rem, 3.5vw, 2.75rem);
+  /* Full-page footer, matching the reference: a single centred stack on a
+     black field — contact links, then the oversized mark, then the year. */
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: clamp(2rem, 6vw, 5rem) var(--gutter);
+  color: var(--paper);
+  text-align: center;
+}
+
+.contact {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.9rem;
+}
+
+.email {
+  font-family: var(--font-alt);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--paper);
+  transition: color var(--dur-fast) var(--ease-out);
+}
+
+.email:hover {
+  color: var(--accent);
+}
+
+.social {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  transition: transform var(--dur-fast) var(--ease-spring);
+}
+
+.social img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  /* Icons ship dark; invert them onto the black footer. */
+  filter: invert(1);
+}
+
+.social:hover {
+  transform: translateY(-2px) scale(1.08);
+}
+
+/* ---- centre logo ---- */
+
+.logoWrap {
+  cursor: pointer;
+}
+
+.logo {
+  width: clamp(130px, 24vw, 300px);
+  height: auto;
+  color: var(--paper);
+}
+
+.logoPart {
+  transform-origin: center;
+  transition:
+    transform var(--dur-med) var(--ease-spring),
+    fill var(--dur-med) var(--ease-out);
+}
+
+/* Splay the mark's pieces apart on hover — the footer's one moment of play. */
+.logoWrap:hover .logoPart[data-part='a'] {
+  transform: translate(-8%, -12%) rotate(-7deg);
+}
+
+.logoWrap:hover .logoPart[data-part='b'] {
+  transform: translate(-8%, 12%) rotate(7deg);
+}
+
+.logoWrap:hover .logoPart[data-part='c'] {
+  transform: translateX(8%);
+  fill: var(--accent);
+}
+
+.year {
+  font-family: var(--font-alt);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  letter-spacing: var(--tracking-wide);
+}
+
+@media (max-width: 700px) {
+  .footer {
+    gap: 2rem;
+  }
+
+  .contact {
+    flex-wrap: wrap;
+  }
+}

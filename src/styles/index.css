@@ -1,0 +1,130 @@
+@import './_reset.css';
+
+/*
+  Design system.
+  Tokens mirror the reference site's visual language: a stark black-on-white
+  editorial layout, a single red accent reserved for hover, and per-case
+  signature inks. Kept deliberately small so it stays tunable.
+*/
+
+:root {
+  /* ---- Palette ---- */
+  --ink: #000000;
+  --paper: #ffffff;
+  --accent: #db0508; /* hover only — never used as fill */
+  --divider: #d3d2d2;
+  --grey-100: #f4f4f4;
+  --grey-200: #e8e8e8;
+  --grey-400: #a8a8a8;
+  --grey-600: #6a6a6a;
+
+  /* Per-case signature inks (set on each .case-section) */
+  --case-ink-1: #dd3b86;
+  --case-ink-2: #1f9e5a;
+  --case-ink-3: #e5731d;
+
+  /* ---- Typography ---- */
+  --font-display: 'Anton', 'Arial Narrow', sans-serif;
+  --font-sans: 'Montserrat', system-ui, -apple-system, sans-serif;
+  --font-alt: 'Poppins', system-ui, sans-serif;
+  --font-serif: 'Playfair Display', Georgia, serif;
+
+  /* Fluid type scale */
+  --fs-xs: 0.6875rem; /* 11px — tags, case numbers */
+  --fs-sm: 0.8125rem; /* 13px — nav, meta */
+  --fs-base: 0.9375rem; /* 15px — body */
+  --fs-md: clamp(1rem, 1.4vw, 1.25rem);
+  --fs-lg: clamp(1.5rem, 3vw, 2.5rem);
+  --fs-xl: clamp(2rem, 5vw, 4rem);
+  --fs-hero: clamp(1.75rem, 8vw, 8rem); /* the big display title */
+
+  --tracking-tight: -0.02em;
+  --tracking-wide: 0.08em;
+  --tracking-wider: 0.14em;
+
+  /* ---- Layout ---- */
+  --header-height: 76px;
+  --gutter: clamp(1rem, 3vw, 2.5rem);
+  --max-width: 1600px;
+  --radius-sm: 6px;
+  --radius-md: 14px;
+  --radius-lg: 28px;
+  --radius-phone: 34px;
+
+  /* ---- Motion ---- */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --dur-fast: 180ms;
+  --dur-med: 380ms;
+  --dur-slow: 720ms;
+
+  /* ---- Elevation ---- */
+  --shadow-card: 0 24px 70px -18px rgb(0 0 0 / 0.22);
+  --shadow-phone: 0 30px 60px -20px rgb(0 0 0 / 0.28);
+
+  /* ---- Scroll-driven values (written by JS) ---- */
+  --hero-case-progress: 0;
+  --footer-reveal-progress: 0;
+  --hero-cursor-x: 0;
+  --hero-cursor-y: 0;
+}
+
+html {
+  background: var(--paper);
+}
+
+/*
+  Lenis owns scrolling. It needs the native scrollbar on <html> but must not
+  fight CSS smooth-scroll, hence `scroll-behavior: auto`.
+*/
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: var(--fs-base);
+  line-height: 1.5;
+  overflow-x: clip;
+}
+
+/* Shared display-title treatment: ultra-tight, all-caps, optically squeezed. */
+.display-type {
+  font-family: var(--font-display);
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-tight);
+  line-height: 0.86;
+}
+
+/* Small caps-y meta label used for tags, case numbers, marquee. */
+.meta-type {
+  font-family: var(--font-alt);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wider);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+::selection {
+  background: var(--ink);
+  color: var(--paper);
+}

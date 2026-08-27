@@ -1,0 +1,38 @@
+/*
+  Global (non-module) styles for the click-burst ripple.
+
+  The ripple node is created imperatively on document.body by useClickBurst, so
+  it can't be scoped by CSS Modules — hence a plain stylesheet with a stable
+  class name.
+*/
+
+.click-burst {
+  position: fixed;
+  z-index: 9999;
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  border-radius: 50%;
+  border: 2px solid var(--ink);
+  pointer-events: none;
+  animation: click-burst 520ms var(--ease-out) forwards;
+}
+
+@keyframes click-burst {
+  0% {
+    transform: scale(0.3);
+    opacity: 0.85;
+    border-width: 3px;
+  }
+  100% {
+    transform: scale(6);
+    opacity: 0;
+    border-width: 1px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .click-burst {
+    display: none;
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(awk '{print NR\":\"length\\($0\\)}' index_csoirs4g.js)",
+      "Bash(sort -t: -k2 -rn)",
+      "Bash(grep -n -o -E '.{0,200}this\\\\.type=\"PlaneGeometry\"' index_csoirs4g.js)",
+      "Bash(awk 'NR>=4155 && NR<=4183 {print NR\": len=\"length\\($0\\)}' index_csoirs4g.js)",
+      "Bash(grep -o -E \".{400}mf=7\\\\.2,Ux=34,PC=46.{700}\" index_csoirs4g.js)",
+      "Bash(grep -o -E 'const Xu=\\\\[.{0,3000}' index_csoirs4g.js)",
+      "Bash(cd *)",
+      "Bash(grep -o -E '.{200}referenceThetaLength:\\\\.92,y:2\\\\.08\\\\}.{80}' index_csoirs4g.js)",
+      "Bash(grep -o -E 'function Qu\\\\\\(.{0,1500}' index_csoirs4g.js)",
+      "Bash(grep -o -E 'hs=\\\\{font:\"600 52px.{0,400}' index_csoirs4g.js)",
+      "Bash(grep -o -E 'function \\\\$p\\\\\\(.{0,1800}' index_csoirs4g.js)",
+      "Bash(python -c ' *)",
+      "Bash(node \"C:/Users/smash/.claude/skills/browser-automation/browser.mjs\" http://localhost:5173 --script ./scripts/qa-parallax.mjs)",
+      "Bash(grep -o -E '.{160}wheel-lens-blur.{0,200}' index_adxwu64m.css)",
+      "Bash(grep -o -E '.{420}hero-composition-offset-y.{0,200}' index_csoirs4g.js)",
+      "Bash(grep -b -o 'wheel-lens-blur--left,.wheel-lens-blur--right{display:none}' index_adxwu64m.css)",
+      "Bash(python -)",
+      "Skill(browser-automation)",
+      "Bash(node \"C:/Users/smash/.claude/skills/browser-automation/browser.mjs\" http://localhost:5199/ --script ./.qa-hero.mjs --timeout 45000)",
+      "Bash(node \"C:/Users/smash/.claude/skills/browser-automation/browser.mjs\" http://localhost:5199/ --script ./.qa-footer.mjs --timeout 45000)",
+      "Bash(node \"C:/Users/smash/.claude/skills/browser-automation/browser.mjs\" http://localhost:5233/ --script ./.qa-tilt.mjs --timeout 45000)"
+    ]
+  }
+}

@@ -1,0 +1,356 @@
+/* ============================================================
+   HERO
+   Layer order (bottom → top):
+     1  canvas (3D screen wheel)
+     2  lens blur edges
+     3  display title
+     3  side taglines
+     4  character  ← deliberately in front of the title, as in the reference
+     5  explore cue
+
+   Layers 3–4 each sit in a parallax wrapper (.layerTitle / .layerAside /
+   .layerCharacter) that translates off --hero-cursor-x/y, written per frame by
+   useHeroParallax onto this section. The cards do their own equivalent tilt in
+   the WebGL scene, so the whole composition swings together. The header is
+   fixed and outside this section, so it never inherits the vars and stays put.
+   ============================================================ */
+
+.hero {
+  /* Pinned to the top of the scroll: the marquee, the case stack and the
+     footer all carry higher z-indices and rise up over this hero, which is
+     what produces the cascade out of the hero into the first case card. It
+     stays stuck for the whole document (its containing block is .page), but the
+     opaque sections above it cover it, so it only ever shows through at the
+     top. */
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  width: 100%;
+  /* dvh keeps mobile browser chrome from cropping the composition. */
+  height: 100vh;
+  height: 100dvh;
+  overflow: clip;
+  isolation: isolate;
+  /* Establishes the 3D space the DOM scene tilts within (see .overlay). The
+     origin sits a little above centre so the tilt reads as the composition
+     leaning toward the pointer rather than spinning about the middle. */
+  perspective: 1400px;
+  perspective-origin: 50% 44%;
+}
+
+/* ---- 1. WebGL stage ---- */
+
+.stage {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* ---- 2. lens blur edges ---- */
+
+.lensLeft,
+.lensRight {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 2;
+  width: clamp(80px, 18vw, 340px);
+  pointer-events: none;
+  /* Graduated blur: the mask fades the effect out toward the centre so the
+     wheel dissolves into the page instead of ending on a hard crop line. */
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.lensLeft {
+  left: 0;
+  mask-image: linear-gradient(to right, #000 0%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, #000 0%, transparent 100%);
+  background: linear-gradient(to right, rgb(255 255 255 / 0.85), transparent);
+}
+
+.lensRight {
+  right: 0;
+  mask-image: linear-gradient(to left, #000 0%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to left, #000 0%, transparent 100%);
+  background: linear-gradient(to left, rgb(255 255 255 / 0.85), transparent);
+}
+
+/* ---- overlay wrapper ---- */
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  /* The whole DOM scene — title, taglines and figure — tilts toward the pointer
+     in 3D. This is the reference's signature move: the composition leans as one
+     plane rather than the layers sliding flat. Perspective lives on .hero; here
+     we only rotate. The origin sits low-of-centre so the figure's planted feet
+     barely travel while the title up top swings furthest, which reads as the
+     scene pivoting around the person. The per-layer transls below still add
+     depth parallax on top of this shared tilt. */
+  transform: rotateX(calc(var(--hero-cursor-y, 0) * -6deg))
+    rotateY(calc(var(--hero-cursor-x, 0) * 9deg));
+  transform-origin: 50% 64%;
+  will-change: transform;
+}
+
+/* ---- parallax layers ----
+
+   Each wrapper carries only the pointer transform; the element inside keeps its
+   own layout and whatever GSAP writes for the entrance. Keeping the two on
+   separate nodes is the whole point — GSAP writes inline `transform`, so a
+   shared node would mean the entrance tween and the parallax clobbering each
+   other every frame.
+
+   Travel scales with how near the layer reads: the title sits deepest and moves
+   least, the taglines further. Both track the pointer on *both* axes, adding a
+   little depth parallax on top of the whole-scene tilt that .overlay applies.
+
+   The character carries NO translate of its own. It's the focal subject,
+   anchored to the bottom edge; instead of sliding it simply tilts with the
+   scene (see .overlay), so it leans toward the pointer while its feet stay
+   planted rather than tracking sideways across the floor. */
+
+.layerTitle,
+.layerAside,
+.layerCharacter {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.layerTitle {
+  z-index: 3;
+  transform: translate3d(calc(var(--hero-cursor-x, 0) * 18px), calc(var(--hero-cursor-y, 0) * 16px), 0);
+}
+
+.layerAside {
+  z-index: 3;
+  transform: translate3d(calc(var(--hero-cursor-x, 0) * 26px), calc(var(--hero-cursor-y, 0) * 22px), 0);
+}
+
+.layerCharacter {
+  z-index: 4;
+  /* No translate — the figure tilts with the scene and stays anchored. */
+}
+
+/* ---- 3. display title ---- */
+
+.title {
+  position: absolute;
+  /* Well below the header with generous breathing room. 
+     Using clamp(4.5rem...) keeps it clear of the 76px header on mobile. */
+  top: clamp(4.5rem, 9vh, 7rem);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  width: max-content;
+  max-width: 96vw;
+  /* Start hidden; the entrance timeline reveals it once the intro clears. */
+  opacity: 0;
+
+  font-family: var(--font-display);
+  font-size: var(--fs-hero);
+  font-weight: 400;
+  line-height: 0.84;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-tight);
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.titleInner {
+  display: flex;
+  align-items: flex-end;
+  /* Clip the char rise-in without hiding the arc's vertical offsets. */
+  padding-bottom: 0.12em;
+}
+
+.titleChar {
+  display: inline-block;
+  transform: rotate(var(--rot)) translateY(var(--dy));
+  transform-origin: center bottom;
+  will-change: transform;
+}
+
+/* Preserve the inter-word gap — a bare space in a flex row collapses. */
+.titleChar[data-space] {
+  width: 0.26em;
+}
+
+/* ---- 4. character ---- */
+
+.character {
+  position: absolute;
+  left: 50%;
+  /* Anchored to the bottom so feet sit near the explore cue. */
+  bottom: clamp(2rem, 4vh, 3.5rem);
+  transform: translateX(-50%);
+  z-index: 4;
+  /* Slightly smaller so the full figure fits with breathing room above
+     and below, matching the reference proportions. */
+  height: clamp(340px, 66vh, 700px);
+  width: auto;
+  /* Subtle grounding shadow so the figure doesn't float over the wheel. */
+  filter: drop-shadow(0 26px 34px rgb(0 0 0 / 0.16));
+}
+
+/* ---- aside taglines ---- */
+
+.aside {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: clamp(14%, 22vh, 28%);
+  z-index: 3;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 clamp(1.5rem, 8vw, 9rem);
+  font-family: var(--font-alt);
+  font-size: clamp(0.7rem, 1.15vw, 1.05rem);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  color: var(--ink);
+}
+
+.asideLeft {
+  transform: rotate(-4deg);
+}
+
+.asideRight {
+  transform: rotate(3deg);
+}
+
+/* ---- 5. explore cue ---- */
+
+.cue {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  /* Bottom padding leaves room for the arrow's 4px bob without it clipping
+     against the viewport edge. */
+  padding: 0.85rem 1.15rem 0.85rem;
+  background: var(--ink);
+  color: var(--paper);
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  font-family: var(--font-alt);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wider);
+  pointer-events: auto;
+  transition: transform var(--dur-med) var(--ease-out);
+}
+
+.cue:hover {
+  transform: translateX(-50%) translateY(-4px);
+}
+
+.cueArrow {
+  width: 9px;
+  height: 16px;
+  background: currentColor;
+  /* Down-arrow drawn as a clip-path so it inherits currentColor and needs no asset. */
+  clip-path: polygon(40% 0, 60% 0, 60% 62%, 100% 62%, 50% 100%, 0 62%, 40% 62%);
+  animation: cue-bob 1.9s var(--ease-in-out) infinite;
+}
+
+@keyframes cue-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(4px);
+  }
+}
+
+/* ============================================================
+   MARQUEE
+   ============================================================ */
+
+.marquee {
+  position: relative;
+  z-index: 10;
+  overflow: hidden;
+  padding: clamp(0.6rem, 1.4vw, 1.1rem) 0;
+  background: var(--paper);
+  border-top: 1px solid var(--divider);
+  border-bottom: 1px solid var(--divider);
+}
+
+.marqueeTrack {
+  display: flex;
+  width: max-content;
+  /* Two identical copies + a -50% shift = a seamless loop at any copy length. */
+  animation: marquee-scroll 26s linear infinite;
+}
+
+.marqueeCopy {
+  flex: 0 0 auto;
+  padding-right: 0.6em;
+  font-family: var(--font-alt);
+  font-size: clamp(0.72rem, 1.1vw, 0.95rem);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wider);
+  white-space: nowrap;
+}
+
+@keyframes marquee-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marqueeTrack {
+    animation: none;
+  }
+  .cueArrow {
+    animation: none;
+  }
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+
+@media (max-width: 900px) {
+  .aside {
+    bottom: 15%;
+    font-size: 0.66rem;
+  }
+
+  .character {
+    height: clamp(280px, 56vh, 520px);
+  }
+}
+
+@media (max-width: 560px) {
+  /* At this width the two asides collide with each other and with the figure.
+     The marquee directly below already carries the same copy, so drop them
+     rather than stacking them over the character. */
+  .aside {
+    display: none;
+  }
+}

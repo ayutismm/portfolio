@@ -1,0 +1,334 @@
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  height: var(--header-height);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gutter);
+  padding: 0 var(--gutter);
+  /* Sits over the WebGL hero, so it must not paint a background plate. */
+  background: transparent;
+  mix-blend-mode: normal;
+  transition:
+    height var(--dur-med) var(--ease-out),
+    background var(--dur-med) var(--ease-out),
+    border-color var(--dur-med) var(--ease-out),
+    backdrop-filter var(--dur-med) var(--ease-out);
+  border-bottom: 1px solid transparent;
+}
+
+/*
+  Condensed state, set by Header once the page scrolls past the hero's top.
+  Past the hero the header sits over white cards, so it can afford a frosted
+  plate — which it must not have over the WebGL canvas.
+*/
+.header[data-scrolled] {
+  height: calc(var(--header-height) - 14px);
+  background: rgb(255 255 255 / 0.72);
+  border-bottom-color: var(--divider);
+  backdrop-filter: blur(14px) saturate(1.6);
+  -webkit-backdrop-filter: blur(14px) saturate(1.6);
+}
+
+/* ---- brand ---- */
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 1.15rem;
+  min-width: 0;
+}
+
+.logoLink {
+  display: block;
+  cursor: pointer;
+}
+
+.logo {
+  width: 26px;
+  height: auto;
+  color: var(--ink);
+  transition: color var(--dur-fast) var(--ease-out);
+}
+
+.logoLink:hover .logo {
+  color: var(--accent);
+}
+
+.location {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-alt);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  white-space: nowrap;
+  cursor: default;
+  transition: color var(--dur-fast) var(--ease-out);
+}
+
+.location img {
+  width: 13px;
+  height: 13px;
+}
+
+.location:hover {
+  color: var(--accent);
+}
+
+/* ---- centre tabs ---- */
+
+.tabs {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.indicator {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  height: 28px;
+  margin-top: -14px;
+  border-radius: var(--radius-sm);
+  background: var(--ink);
+  /* Animate position/size only — cheap, no layout thrash. */
+  transition:
+    transform var(--dur-med) var(--ease-out),
+    width var(--dur-med) var(--ease-out);
+}
+
+.tab,
+.tabActive {
+  position: relative;
+  z-index: 1;
+  padding: 0.35rem 0.75rem;
+  font-family: var(--font-alt);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  transition: color var(--dur-med) var(--ease-out);
+}
+
+.tab {
+  color: var(--ink);
+}
+
+.tab:hover {
+  color: var(--accent);
+}
+
+.tabActive {
+  color: var(--paper);
+}
+
+/* ---- contact ---- */
+
+.contact {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.email {
+  font-family: var(--font-alt);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  transition: color var(--dur-fast) var(--ease-out);
+}
+
+.email:hover {
+  color: var(--accent);
+}
+
+.social {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  transition:
+    transform var(--dur-fast) var(--ease-spring),
+    opacity var(--dur-fast) var(--ease-out);
+}
+
+.social img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.social:hover {
+  transform: translateY(-2px) scale(1.08);
+}
+
+/* ---- mobile disclosure ---- */
+
+.infoToggle {
+  display: none;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border: 1.5px solid var(--ink);
+  border-radius: 50%;
+}
+
+.infoIcon {
+  position: relative;
+  width: 2px;
+  height: 11px;
+  background: var(--ink);
+  border-radius: 1px;
+}
+
+.infoIcon::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: 0;
+  width: 2px;
+  height: 2px;
+  background: var(--ink);
+  border-radius: 50%;
+}
+
+.panel,
+.panelOpen {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: var(--gutter);
+  z-index: 101;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.8rem;
+  padding: 1rem 1.15rem;
+  background: var(--paper);
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  transition:
+    opacity var(--dur-med) var(--ease-out),
+    transform var(--dur-med) var(--ease-out),
+    visibility var(--dur-med);
+}
+
+.panel {
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-8px) scale(0.97);
+  pointer-events: none;
+}
+
+.panelOpen {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+}
+
+.panelSocials {
+  display: flex;
+  gap: 0.9rem;
+}
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 99;
+  background: transparent;
+  cursor: default;
+}
+
+/* ---- inverted state (at footer) ---- */
+.header[data-inverted] {
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-bottom-color: transparent;
+}
+
+.header[data-inverted] .logo {
+  color: var(--paper);
+}
+
+.header[data-inverted] .location {
+  color: var(--paper);
+}
+
+.header[data-inverted] .location img {
+  filter: invert(1);
+}
+
+.header[data-inverted] .tab {
+  color: var(--paper);
+}
+
+.header[data-inverted] .tab:hover {
+  color: var(--accent);
+}
+
+.header[data-inverted] .tabActive {
+  color: var(--ink);
+}
+
+.header[data-inverted] .indicator {
+  background: var(--paper);
+}
+
+.header[data-inverted] .email {
+  color: var(--paper);
+}
+
+.header[data-inverted] .email:hover {
+  color: var(--accent);
+}
+
+.header[data-inverted] .social img {
+  filter: invert(1);
+}
+
+.header[data-inverted] .infoToggle {
+  border-color: var(--paper);
+}
+
+.header[data-inverted] .infoIcon,
+.header[data-inverted] .infoIcon::before {
+  background: var(--paper);
+}
+
+/* Below the tablet break the inline contact block collapses into the panel. */
+@media (max-width: 900px) {
+  .contact {
+    display: none;
+  }
+
+  .infoToggle {
+    display: grid;
+  }
+
+  .location {
+    display: none;
+  }
+}
+
+@media (max-width: 560px) {
+  /* No specific overrides needed here currently. */
+}
+
+/* The panel is a mobile affordance; never show it on desktop. */
+@media (min-width: 901px) {
+  .panel,
+  .panelOpen {
+    display: none;
+  }
+}
