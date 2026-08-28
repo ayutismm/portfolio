@@ -53,15 +53,15 @@ export const projects = [
 ]
 
 /*
-  Screens shown on the 3D hero carousel. More entries = a fuller wheel.
-  The reference shows ~7; we reuse the project covers plus extra placeholders.
+  Screens shown on the 3D hero carousel — the app screenshots pasted into
+  /public/projects/. More entries = a fuller wheel; they recycle across the
+  11 slots, so six reads like a complete ring.
 */
 export const carouselScreens = [
-  '/projects/screen-1.svg',
-  '/projects/screen-2.svg',
-  '/projects/screen-3.svg',
-  '/projects/screen-4.svg',
-  '/projects/screen-5.svg',
-  '/projects/screen-6.svg',
-  '/projects/screen-7.svg',
+  '/projects/screenshot-dashboard.jpeg',
+  '/projects/screenshot-mess.jpeg',
+  '/projects/screenshot-profile1.jpeg',
+  '/projects/screenshot-profile2.jpeg',
+  '/projects/screenshot-attendance.jpeg',
+  '/projects/screenshot-timetable.jpeg',
 ]

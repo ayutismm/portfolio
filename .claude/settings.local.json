@@ -24,7 +24,8 @@
       "Bash(node \"C:/Users/smash/.claude/skills/browser-automation/browser.mjs\" http://localhost:5233/ --script ./.qa-tilt.mjs --timeout 45000)",
       "Bash(npm run *)",
       "Bash(node *)",
-      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5173/)"
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5173/)",
+      "mcp__ide__getDiagnostics"
     ]
   }
 }

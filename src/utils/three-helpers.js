@@ -77,6 +77,15 @@ const FADE_TO = 3.8 // outer cards fade gradually into the edges
 const DRIFT_PER_SEC = 0.16
 const SLOTS_PER_VIEWPORT = 2.5
 
+/*
+  Hover interaction. A hovered card grows to SCALE_UP × its slot size — ~8%
+  at full hover, a clear nudge that still stays inside its slot spacing — and
+  blends from grayscale to full colour (see the uGray uniform). Scaling about
+  the card's centre reads as the card pushing toward the viewer instead of
+  leaving its slot.
+*/
+const SCALE_UP = 1.08
+
 // Camera distance. 11 frames ~6.7 units of height at the centre card; narrow
 // viewports pull back so the row still reads as a row instead of one phone.
 const CAM_Z_WIDE = 11
@@ -97,6 +106,7 @@ const FRAG = /* glsl */ `
   uniform vec2 uSize;
   uniform float uRadius;
   uniform float uOpacity;
+  uniform float uGray;
 
   // Signed distance to a rounded box centred on the origin.
   float roundedBoxSDF(vec2 p, vec2 b, float r) {
@@ -112,7 +122,11 @@ const FRAG = /* glsl */ `
     float edge = 0.012 * uSize.y;
     float alpha = (1.0 - smoothstep(-edge, edge, d)) * uOpacity;
     if (alpha <= 0.001) discard;
-    gl_FragColor = vec4(tex.rgb, tex.a * alpha);
+    // Grayscale by default; uGray is lerped 1→0 on hover so the card fills in
+    // with colour. Luminance weights match sRGB perceptual brightness.
+    vec3 gray = vec3(dot(tex.rgb, vec3(0.299, 0.587, 0.114)));
+    vec3 rgb = mix(tex.rgb, gray, uGray);
+    gl_FragColor = vec4(rgb, tex.a * alpha);
   }
 `
 
@@ -181,11 +195,13 @@ export function createCarousel(canvas, { images }) {
         uSize: { value: new THREE.Vector2(PLANE_W, PLANE_H) },
         uRadius: { value: CORNER_RADIUS },
         uOpacity: { value: 1 },
+        uGray: { value: 1 }, // 1 = full grayscale; hover lerps it to 0
       },
     })
     materials.push(material)
 
     const mesh = new THREE.Mesh(geometry, material)
+    mesh.userData.index = i // for the hover raycast to name its hit
     meshes.push(mesh)
     row.add(mesh)
   }
@@ -222,8 +238,24 @@ export function createCarousel(canvas, { images }) {
   // ---- driven state ----
   let scrollProgress = 0
   const pointer = { x: 0, y: 0 }
+  let pointerActive = false // stays false until the pointer first moves
   const smoothed = { x: 0, y: 0, offset: 0 }
   let drift = 0
+
+  /*
+    Hover state. Each card carries a 0→1 progress that drives both the
+    grayscale→colour blend and the scale-up. The ray is cast from the pointer's
+    NDC against the card planes, so the hover tracks a card's real screen spot
+    through the drift, the scroll slide and the stage parallax — if a hovered
+    card slides out from under the cursor, the interaction hands off to the
+    next card that passes through.
+  */
+  const raycaster = new THREE.Raycaster()
+  const ndc = new THREE.Vector2()
+  const hover = new Array(COUNT).fill(0)
+  // Reused per frame as the hover targets (1 = under the cursor), so the
+  // render loop doesn't allocate a new set of targets on every tick.
+  const hoverTargets = new Array(COUNT).fill(0)
 
   /*
     Under reduced motion the row stops drifting on its own and stops tilting to
@@ -239,6 +271,10 @@ export function createCarousel(canvas, { images }) {
   const setPointer = (x, y) => {
     pointer.x = x
     pointer.y = y
+    pointerActive = true
+  }
+  const setPointerActive = (active) => {
+    pointerActive = active
   }
 
   const resize = () => {
@@ -262,7 +298,13 @@ export function createCarousel(canvas, { images }) {
     smoothed.offset = lerp(smoothed.offset, targetOffset, 0.08)
 
     for (let i = 0; i < meshes.length; i++) {
-      placeCard(meshes[i], wrapSlot(i + smoothed.offset))
+      const mesh = meshes[i]
+      placeCard(mesh, wrapSlot(i + smoothed.offset))
+      // Hover effects ride on top of the card's slot transform: the card
+      // scales up about its own centre and the colour blend is per-material.
+      // Both read the previous frame's progress so the lerp stays smooth.
+      mesh.scale.setScalar(1 + hover[i] * (SCALE_UP - 1))
+      mesh.material.uniforms.uGray.value = 1 - hover[i]
     }
 
     /*
@@ -299,6 +341,32 @@ export function createCarousel(canvas, { images }) {
     // while the outer cards carry the vertical travel.
     stage.rotation.x = smoothed.y * -0.06
 
+    /*
+      Hover raycast. The cards' world matrices must include this frame's slot
+      positions and the stage parallax, so flush them before intersecting.
+      The pointer is NDC (-1..1) and lines up with the canvas, so no manual
+      picking from CSS coordinates is needed.
+    */
+    if (pointerActive) {
+      scene.updateMatrixWorld(true)
+      camera.updateMatrixWorld(true)
+      // The pointer y runs +1 at the bottom (CSS clientY), but Three.js NDC
+      // wants +1 at the top — negate so the ray lands where the cursor is.
+      ndc.set(pointer.x, -pointer.y)
+      raycaster.setFromCamera(ndc, camera)
+      hoverTargets.fill(0)
+      const hits = raycaster.intersectObjects(meshes, false)
+      for (const hit of hits) hoverTargets[hit.object.userData.index] = 1
+      for (let i = 0; i < COUNT; i++) {
+        hover[i] = lerp(hover[i], hoverTargets[i], 0.14)
+      }
+    } else {
+      // Pointer has never moved (or left the viewport) — ease any lingering
+      // hover back to rest so cards don't keep highlighting themselves as
+      // they drift through the cursor's last known spot.
+      for (let i = 0; i < COUNT; i++) hover[i] = lerp(hover[i], 0, 0.14)
+    }
+
     renderer.render(scene, camera)
   }
 
@@ -311,5 +379,5 @@ export function createCarousel(canvas, { images }) {
 
   resize()
 
-  return { render, resize, setScroll, setPointer, dispose }
+  return { render, resize, setScroll, setPointer, setPointerActive, dispose }
 }

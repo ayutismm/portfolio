@@ -43,6 +43,10 @@ export default function HeroCarousel() {
       carousel.setPointer(x, y)
     }
 
+    // Leaving the viewport ends the hover: without this, cards keep lighting
+    // up as they drift through the cursor's last known position.
+    const onPointerLeave = () => carousel.setPointerActive(false)
+
     const onResize = () => carousel.resize()
 
     // Observe the container too: the canvas is sized from its parent, which can
@@ -52,6 +56,7 @@ export default function HeroCarousel() {
 
     window.addEventListener('scroll', onScroll, { passive: true })
     window.addEventListener('pointermove', onPointerMove, { passive: true })
+    document.documentElement.addEventListener('pointerleave', onPointerLeave)
     window.addEventListener('resize', onResize)
     onScroll()
 
@@ -60,6 +65,7 @@ export default function HeroCarousel() {
       ro.disconnect()
       window.removeEventListener('scroll', onScroll)
       window.removeEventListener('pointermove', onPointerMove)
+      document.documentElement.removeEventListener('pointerleave', onPointerLeave)
       window.removeEventListener('resize', onResize)
       carousel.dispose()
     }
