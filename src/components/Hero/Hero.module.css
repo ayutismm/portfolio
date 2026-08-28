@@ -45,6 +45,10 @@
   position: absolute;
   inset: 0;
   z-index: 1;
+  /* Hidden until the reveal animation scales it up from centre. */
+  opacity: 0;
+  transform-origin: 50% 50%;
+  will-change: transform, opacity;
 }
 
 .canvas {
@@ -135,13 +139,9 @@
      Three.js's stage (rotation about the origin, then position). The yaw is
      negative and the pitch positive because CSS rotateX's +Y points down while
      Three's points up. */
-  transform: translate3d(
-      calc(var(--hero-cursor-x, 0) * var(--hero-slide-x, 0px)),
+  transform: translate3d(calc(var(--hero-cursor-x, 0) * var(--hero-slide-x, 0px)),
       calc(var(--hero-cursor-y, 0) * var(--hero-slide-y, 0px)),
-      0
-    )
-    rotateX(calc(var(--hero-cursor-y, 0) * var(--hero-tilt-pitch, 3.438deg)))
-    rotateY(calc(var(--hero-cursor-x, 0) * var(--hero-tilt-yaw, -3.151deg)));
+      0) rotateX(calc(var(--hero-cursor-y, 0) * var(--hero-tilt-pitch, 3.438deg))) rotateY(calc(var(--hero-cursor-x, 0) * var(--hero-tilt-yaw, -3.151deg)));
   transform-origin: 50% 50%;
   /* Pass the hero perspective through to the glyphs' and taglines' translateZ. */
   transform-style: preserve-3d;
@@ -152,8 +152,7 @@
   /* Lean toward the pointer about a low-of-centre pivot (the same tilt and
      origin .overlay used to apply), so the figure's planted feet barely travel
      while the head swings furthest. */
-  transform: rotateX(calc(var(--hero-cursor-y, 0) * var(--hero-tilt-pitch, 3.438deg)))
-    rotateY(calc(var(--hero-cursor-x, 0) * var(--hero-tilt-yaw, -3.151deg)));
+  transform: rotateX(calc(var(--hero-cursor-y, 0) * var(--hero-tilt-pitch, 3.438deg))) rotateY(calc(var(--hero-cursor-x, 0) * var(--hero-tilt-yaw, -3.151deg)));
   transform-origin: 50% 64%;
 }
 
@@ -324,24 +323,26 @@
 }
 
 @keyframes cue-bob {
+
   0%,
   100% {
     transform: translateY(0);
   }
+
   50% {
     transform: translateY(4px);
   }
 }
 
 /* ============================================================
-   MARQUEE
+   MARQUEE  –  tech-stack logo strip
    ============================================================ */
 
 .marquee {
   position: relative;
   z-index: 10;
   overflow: hidden;
-  padding: clamp(0.6rem, 1.4vw, 1.1rem) 0;
+  padding: clamp(0.7rem, 1.6vw, 1.2rem) 0;
   background: var(--paper);
   border-top: 1px solid var(--divider);
   border-bottom: 1px solid var(--divider);
@@ -350,25 +351,53 @@
 .marqueeTrack {
   display: flex;
   width: max-content;
-  /* Two identical copies + a -50% shift = a seamless loop at any copy length. */
-  animation: marquee-scroll 26s linear infinite;
+  /* Two identical .marqueeSet copies → a -50% shift loops seamlessly. */
+  animation: marquee-scroll 38s linear infinite;
 }
 
-.marqueeCopy {
+/* Each copy of the full icon set. */
+.marqueeSet {
+  display: flex;
+  align-items: center;
+  gap: clamp(1.6rem, 3.5vw, 3.2rem);
   flex: 0 0 auto;
-  padding-right: 0.6em;
+  /* Right padding == gap so the seam between the two copies is even. */
+  padding-right: clamp(1.6rem, 3.5vw, 3.2rem);
+}
+
+/* Icon + label pair. */
+.marqueeItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 0 0 auto;
+}
+
+.marqueeIcon {
+  width: clamp(20px, 2.4vw, 30px);
+  height: clamp(20px, 2.4vw, 30px);
+  object-fit: contain;
+  flex-shrink: 0;
+  /* Desaturate to monochrome so every vendor icon matches the page palette. */
+  filter: grayscale(1) contrast(1.2);
+}
+
+.marqueeLabel {
   font-family: var(--font-alt);
-  font-size: clamp(0.72rem, 1.1vw, 0.95rem);
+  font-size: clamp(0.68rem, 1vw, 0.88rem);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: var(--tracking-wider);
   white-space: nowrap;
+  color: var(--ink);
+  opacity: 0.72;
 }
 
 @keyframes marquee-scroll {
   from {
     transform: translateX(0);
   }
+
   to {
     transform: translateX(-50%);
   }
@@ -378,6 +407,7 @@
   .marqueeTrack {
     animation: none;
   }
+
   .cueArrow {
     animation: none;
   }
@@ -400,6 +430,7 @@
 }
 
 @media (max-width: 560px) {
+
   /* At this width the two asides collide with each other and with the figure.
      The marquee directly below already carries the same copy, so drop them
      rather than stacking them over the character. */

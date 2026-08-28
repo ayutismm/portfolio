@@ -104,14 +104,13 @@ export default function IntroLoader({ onReveal }) {
         { opacity: 1, scale: 1, duration: 0.8, ease: 'power2.out', immediateRender: false },
         'morph+=0.4',
       )
+      // Fire onReveal at the same moment the character lands, so the hero's
+      // carousel and title begin their scale-up behind the backdrop — they're
+      // already in motion by the time the sheet lifts, eliminating any gap.
+      .add(() => onRevealRef.current?.(), 'morph+=0.4')
 
-      // 3. The subject holds alone on blank paper.
-      .to({}, { duration: 0.45 })
-
-      // 4. Lift the backdrop. The wheel appears behind the figure and starts its
-      //    fast spin now, and the site chrome arrives with it — one reveal beat.
-      .add(() => onRevealRef.current?.())
-      .to(backdrop, { opacity: 0, duration: 0.75, ease: 'power2.inOut' })
+      // 3. Brief hold while the character settles, then lift the backdrop.
+      .to(backdrop, { opacity: 0, duration: 0.75, ease: 'power2.inOut' }, '+=0.15')
 
       // 5. Let the wheel be seen slowing, then hand the figure off to the hero
       //    underneath as this sheet fades.

@@ -16,7 +16,7 @@ import styles from './Hero.module.css'
   defaults to true so the wheel behaves normally if this ever renders without an
   intro in front of it.
 */
-export default function HeroCarousel({ revealed = true }) {
+export default function HeroCarousel({ revealed = true, stageRef }) {
   const canvasRef = useRef(null)
   const carouselRef = useRef(null)
 
@@ -90,7 +90,7 @@ export default function HeroCarousel({ revealed = true }) {
   }, [revealed])
 
   return (
-    <div className={styles.stage}>
+    <div className={styles.stage} ref={stageRef}>
       <canvas
         ref={canvasRef}
         className={styles.canvas}

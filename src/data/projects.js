@@ -15,8 +15,8 @@ export const profile = {
   email: 'you@example.com',
   taglines: ['Founding Product Designer', 'End-to-end / full stack'],
   socials: [
-    { label: 'Telegram', href: 'https://t.me/yourhandle', icon: '/icons/telegram.svg' },
-    { label: 'LinkedIn', href: 'https://www.linkedin.com/in/yourhandle/', icon: '/icons/linkedin.svg' },
+    { label: 'GitHub', href: 'https://github.com/ayutismm', icon: '/icons/github.svg' },
+    { label: 'LinkedIn', href: 'https://www.linkedin.com/in/ayush-singh-576462339/', icon: '/icons/linkedin.svg' },
   ],
 }
 

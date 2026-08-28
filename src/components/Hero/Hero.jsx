@@ -53,6 +53,7 @@ function ArcedTitle({ text }) {
 
 export default function Hero({ revealed = true }) {
   const heroRef = useRef(null)
+  const stageRef = useRef(null)
   const titleRef = useRef(null)
   const asideRef = useRef(null)
   const asideLeftRef = useRef(null)
@@ -77,6 +78,7 @@ export default function Hero({ revealed = true }) {
 
     const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     const chars = titleRef.current?.querySelectorAll(`.${styles.titleChar}`)
+    const stage = stageRef.current
 
     // Reduced motion: just reveal everything, no movement.
     if (calm) {
@@ -84,27 +86,56 @@ export default function Hero({ revealed = true }) {
         [asideLeftRef.current, asideRightRef.current, charRef.current, cueRef.current],
         { opacity: 1 },
       )
+      if (stage) gsap.set(stage, { opacity: 1 })
       if (chars) gsap.set(chars, { opacity: 1 })
       return
     }
 
     const tl = gsap.timeline()
 
-    // Everything arrives together. The character crossfades in beneath the
-    // intro's own copy, which is fading out over the same window, so the
-    // hand-off reads as one continuous figure. The title glyphs fade as one
-    // group (no stagger — the whole point is that wheel and type land at once)
-    // and the taglines and cue follow a beat behind.
-    tl.to(charRef.current, { opacity: 1, duration: 0.6, ease: 'power2.out' }, 0)
-      .to(
-        [asideLeftRef.current, asideRightRef.current],
-        { opacity: 1, duration: 0.5, ease: 'power2.out' },
-        0.15,
+    // The character crossfades in beneath the intro's own copy. At the same
+    // moment the carousel stage and title expand outward from the centre,
+    // giving the impression the whole composition radiates from the figure.
+    // All three start at t=0 with matched 0.8s durations so they move as one.
+
+    // Character fades in (hand-off from the intro's identical copy).
+    tl.to(charRef.current, { opacity: 1, duration: 0.8, ease: 'power2.out' }, 0)
+
+    // Carousel stage scales up from the centre — starts close to full size
+    // so the motion is subtle, not a dramatic zoom.
+    if (stage) {
+      tl.fromTo(
+        stage,
+        { opacity: 0, scale: 0.75 },
+        { opacity: 1, scale: 1, duration: 0.8, ease: 'power2.out' },
+        0,
       )
-      .to(cueRef.current, { opacity: 1, duration: 0.5, ease: 'power2.out' }, 0.3)
-    if (chars) {
-      tl.to(chars, { opacity: 1, duration: 0.45, ease: 'power2.out' }, 0.1)
     }
+
+    // Title chars scale + fade in from the centre outward with stagger.
+    if (chars?.length) {
+      const mid = (chars.length - 1) / 2
+      tl.fromTo(
+        chars,
+        { opacity: 0, scale: 0.5 },
+        {
+          opacity: 1,
+          scale: 1,
+          duration: 0.6,
+          ease: 'power2.out',
+          stagger: { each: 0.025, from: Math.round(mid) },
+        },
+        0,
+      )
+    }
+
+    // Taglines and explore cue arrive a beat behind.
+    tl.to(
+      [asideLeftRef.current, asideRightRef.current],
+      { opacity: 1, duration: 0.5, ease: 'power2.out' },
+      0.15,
+    )
+      .to(cueRef.current, { opacity: 1, duration: 0.5, ease: 'power2.out' }, 0.3)
 
     return () => tl.kill()
   }, [revealed])
@@ -117,7 +148,7 @@ export default function Hero({ revealed = true }) {
           {profile.name} — {profile.role}
         </h1>
 
-        <HeroCarousel revealed={revealed} />
+        <HeroCarousel revealed={revealed} stageRef={stageRef} />
 
         {/*
           The overlay holds the whole DOM scene — title, taglines and figure —
