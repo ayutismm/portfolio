@@ -283,20 +283,18 @@
 
 .cue {
   /*
-    position: fixed takes the cue out of the hero's stacking context (the
-    hero creates one via position: sticky + z-index: 1 and isolation: isolate),
-    so its z-index is resolved at the page level rather than being capped
-    inside the hero's z:1 context. 201 sits above the IntroLoader (z:200) so
-    the cue paints in front of the loader's character copy throughout the
-    crossfade, and well below the click-burst (z:9999) so the burst still
-    paints over it. The cue stays anchored to the viewport's bottom edge as
-    the user scrolls past the hero.
+    Anchored to the hero's bottom edge (the hero is position: sticky, so its
+    bottom rides up off-screen as the case stack scrolls past). --cue-rise is
+    written per-frame by Hero.jsx as the case stack covers the hero, so the
+    cue rises with the stack instead of staying glued to the viewport. The
+    fade-in is timed in Hero.jsx to start at revealed + 1.55s, after the
+    loader's root has fully faded and the loader DOM has unmounted.
   */
-  position: fixed;
+  position: absolute;
   left: 50%;
   bottom: 0;
-  transform: translateX(-50%);
-  z-index: 201;
+  transform: translateX(-50%) translateY(calc(-1 * var(--cue-rise, 0px)));
+  z-index: 5;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -319,7 +317,7 @@
 }
 
 .cue:hover {
-  transform: translateX(-50%) translateY(-4px);
+  transform: translateX(-50%) translateY(calc(-4px - var(--cue-rise, 0px)));
 }
 
 .cueArrow {

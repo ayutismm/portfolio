@@ -11,8 +11,8 @@ export const profile = {
   role: 'Product Designer',
   // Drives the giant WebGL/DOM hero title. Two words reads best.
   heroTitle: 'PRODUCT DESIGN',
-  location: 'Your City, Country',
-  email: 'you@example.com',
+  location: 'Kota, Rajasthan',
+  email: 'ayutismm@gmail.com',
   taglines: ['Founding Product Designer', 'End-to-end / full stack'],
   socials: [
     { label: 'GitHub', href: 'https://github.com/ayutismm', icon: '/icons/github.svg' },
