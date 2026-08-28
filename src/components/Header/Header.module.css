@@ -15,10 +15,21 @@
   mix-blend-mode: normal;
   transition:
     height var(--dur-med) var(--ease-out),
+    opacity var(--dur-slow) var(--ease-out),
     background var(--dur-med) var(--ease-out),
     border-color var(--dur-med) var(--ease-out),
     backdrop-filter var(--dur-med) var(--ease-out);
   border-bottom: 1px solid transparent;
+}
+
+/*
+  Pre-intro state, set by Header while the intro loader is still running. The
+  nav fades in with the rest of the site at the hand-off; pointer-events are cut
+  so nothing here is clickable while it's invisible.
+*/
+.header[data-intro-pending] {
+  opacity: 0;
+  pointer-events: none;
 }
 
 /*

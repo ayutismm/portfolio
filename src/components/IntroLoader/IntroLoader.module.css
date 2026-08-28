@@ -4,20 +4,68 @@
   z-index: 200;
   display: grid;
   place-items: center;
-  background: var(--paper);
-  will-change: transform;
+  /* The sheet itself is transparent — .backdrop below is what hides the page,
+     and it lifts partway through so the wheel can be revealed while the logo's
+     morphed subject stays on top of it. */
+  background: transparent;
+  will-change: opacity;
 }
 
+/*
+  The actual cover. Opaque paper over the hero's 3D wheel for the logo and morph
+  beats, faded out once the subject is established so the wheel is revealed
+  *after* the figure rather than spinning behind the logo the whole time.
+*/
+.backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: var(--paper);
+  will-change: opacity;
+}
+
+/* Both stage layers sit above the backdrop so they survive its fade. */
 .logoWrap {
+  position: relative;
+  z-index: 1;
   transform-origin: center;
 }
 
 .logo {
   width: clamp(44px, 6vw, 68px);
   height: auto;
-  color: var(--ink);
+  /* The intro shows the mark in the site's red accent, not the usual ink. */
+  color: var(--accent);
 }
 
 .part {
   transform-origin: center;
+}
+
+/* Character copy for the morph. Positioned and sized exactly like the hero's
+   character (see Hero.module.css) so the hand-off crossfade lands pixel-perfect. */
+.charWrap {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: clamp(1.5rem, 3vh, 3rem);
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.character {
+  height: clamp(340px, 70vh, 750px);
+  width: auto;
+  opacity: 0;
+  filter: drop-shadow(0 26px 34px rgb(0 0 0 / 0.16));
+  will-change: transform, opacity;
+}
+
+/* Mirror the hero's responsive shrink so the crossfade stays aligned on mobile. */
+@media (max-width: 900px) {
+  .character {
+    height: clamp(280px, 56vh, 520px);
+  }
 }

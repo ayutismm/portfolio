@@ -10,8 +10,13 @@ import './components/ui/ClickBurst.css'
 import styles from './App.module.css'
 
 export default function App() {
-  // Gate hero entrance animations on the intro loader finishing, so the title
-  // and carousel animate *in* rather than being visible behind the loader.
+  /*
+    Two gates, because the intro reveals the composition in two steps: the wheel
+    appears once the logo has morphed into the subject (`sceneRevealed`), and the
+    site chrome — header, title, taglines, cue — only at the hand-off
+    (`introDone`). Both start false so nothing shows behind the loader.
+  */
+  const [sceneRevealed, setSceneRevealed] = useState(false)
   const [introDone, setIntroDone] = useState(false)
 
   useLenis()
@@ -19,9 +24,12 @@ export default function App() {
 
   return (
     <main className={styles.page}>
-      <IntroLoader onDone={() => setIntroDone(true)} />
-      <Header />
-      <Hero introDone={introDone} />
+      <IntroLoader
+        onSceneReveal={() => setSceneRevealed(true)}
+        onDone={() => setIntroDone(true)}
+      />
+      <Header introDone={introDone} />
+      <Hero sceneRevealed={sceneRevealed} introDone={introDone} />
       <CaseStack />
       <Footer />
     </main>

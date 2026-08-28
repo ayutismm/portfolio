@@ -160,8 +160,6 @@
   z-index: 3;
   width: max-content;
   max-width: 96vw;
-  /* Start hidden; the entrance timeline reveals it once the intro clears. */
-  opacity: 0;
 
   font-family: var(--font-display);
   font-size: var(--fs-hero);
@@ -171,9 +169,7 @@
   letter-spacing: var(--tracking-tight);
   color: var(--ink);
   white-space: nowrap;
-  /* Keep the glyphs' translateZ in the scene. (While opacity is < 1 the spec
-     forces flattening, but the entrance tween lifts opacity to 1 in 0.1s, so
-     the 3D depth is live for the whole staggered rise.) */
+  /* Keep the glyphs' translateZ in the scene. */
   transform-style: preserve-3d;
 }
 
@@ -193,6 +189,8 @@
      the scene; both are in the hero's perspective via the preserve-3d chain. */
   transform: rotate(var(--rot)) translateY(var(--dy)) translateZ(var(--dz)) rotateY(var(--rotY));
   transform-origin: center bottom;
+  /* Hidden until the intro hands off; the reveal staggers these to full opacity. */
+  opacity: 0;
   will-change: transform;
 }
 
@@ -213,6 +211,9 @@
   /* Large enough to dominate vertically but leave room for the title above. */
   height: clamp(340px, 70vh, 750px);
   width: auto;
+  /* Hidden until the intro hands off; the reveal crossfades it in beneath the
+     loader's identical copy so the figure reads as one continuous subject. */
+  opacity: 0;
   /* Subtle grounding shadow so the figure doesn't float over the wheel. */
   filter: drop-shadow(0 26px 34px rgb(0 0 0 / 0.16));
 }
@@ -234,6 +235,8 @@
   text-transform: uppercase;
   letter-spacing: var(--tracking-wide);
   color: var(--ink);
+  /* Hidden until the intro hands off; the reveal fades them in. */
+  opacity: 0;
 }
 
 .asideLeft {
@@ -268,6 +271,8 @@
   text-transform: uppercase;
   letter-spacing: var(--tracking-wider);
   pointer-events: auto;
+  /* Hidden until the intro hands off; the reveal fades it in. */
+  opacity: 0;
   transition: transform var(--dur-med) var(--ease-out);
 }
 

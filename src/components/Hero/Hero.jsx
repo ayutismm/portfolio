@@ -76,7 +76,7 @@ function ArcedTitle({ text }) {
   )
 }
 
-export default function Hero({ introDone }) {
+export default function Hero({ sceneRevealed = true, introDone }) {
   const heroRef = useRef(null)
   const titleRef = useRef(null)
   const asideRef = useRef(null)
@@ -89,22 +89,27 @@ export default function Hero({ introDone }) {
   useEffect(() => {
     if (!introDone) return
 
-    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     const chars = titleRef.current?.querySelectorAll(`.${styles.titleChar}`)
 
-    if (prefersReduced) {
-      gsap.set([titleRef.current, asideRef.current, charRef.current, cueRef.current], { opacity: 1 })
-      if (chars) gsap.set(chars, { opacity: 1, y: 0 })
+    // Reduced motion: just reveal everything, no movement.
+    if (calm) {
+      gsap.set([asideRef.current, charRef.current, cueRef.current], { opacity: 1 })
+      if (chars) gsap.set(chars, { opacity: 1 })
       return
     }
 
-    const tl = gsap.timeline({ defaults: { ease: 'expo.out' } })
+    const tl = gsap.timeline()
 
-    tl.to(titleRef.current, { opacity: 1, duration: 0.1 })
-      .from(chars, { yPercent: 118, opacity: 0, duration: 1.05, stagger: 0.028 }, 0)
-      .from(charRef.current, { yPercent: 8, opacity: 0, duration: 1.1 }, 0.18)
-      .from(asideRef.current?.children ?? [], { y: 22, opacity: 0, duration: 0.8, stagger: 0.1 }, 0.5)
-      .from(cueRef.current, { y: 26, opacity: 0, duration: 0.7 }, 0.66)
+    // Character first: it crossfades in beneath the intro's own copy, which is
+    // fading out over the same window, so the hand-off reads as one continuous
+    // figure. The title glyphs then stagger on and the taglines and cue follow.
+    tl.to(charRef.current, { opacity: 1, duration: 0.6, ease: 'power2.out' }, 0)
+      .to(asideRef.current, { opacity: 1, duration: 0.5, ease: 'power2.out' }, 0.15)
+      .to(cueRef.current, { opacity: 1, duration: 0.5, ease: 'power2.out' }, 0.3)
+    if (chars) {
+      tl.to(chars, { opacity: 1, duration: 0.45, ease: 'power2.out', stagger: 0.012 }, 0.1)
+    }
 
     return () => tl.kill()
   }, [introDone])
@@ -117,7 +122,7 @@ export default function Hero({ introDone }) {
           {profile.name} — {profile.role}
         </h1>
 
-        <HeroCarousel />
+        <HeroCarousel sceneRevealed={sceneRevealed} />
 
         {/*
           Each layer is its own wrapper so the parallax transform stays off the

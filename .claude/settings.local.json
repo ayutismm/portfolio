@@ -25,7 +25,8 @@
       "Bash(npm run *)",
       "Bash(node *)",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5173/)",
-      "mcp__ide__getDiagnostics"
+      "mcp__ide__getDiagnostics",
+      "Bash(git -C \"D:/portfolio-website-mine\" status --short scripts/)"
     ]
   }
 }

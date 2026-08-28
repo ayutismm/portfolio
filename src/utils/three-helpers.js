@@ -78,6 +78,23 @@ const DRIFT_PER_SEC = 0.16
 const SLOTS_PER_VIEWPORT = 2.5
 
 /*
+  Intro spin. The wheel launches at a fast clip the moment it is uncovered, then
+  eases down to the idle drift over INTRO_SPIN_SETTLE seconds. The boost is a
+  multiplier on DRIFT_PER_SEC that decays from INTRO_SPIN_BOOST to 1 with an
+  ease-out, so the slowdown reads as deceleration rather than a linear brake.
+
+  The clock is started by startIntroSpin(), NOT by mount. The intro hides the
+  wheel behind an opaque backdrop until the subject is established, and if the
+  decay ran from mount the boost would be spent by the time anyone could see it —
+  the reveal would show an already-idle row.
+
+  SETTLE deliberately outlasts the rest of the intro so the row is still visibly
+  slowing as the site arrives, instead of having flattened to idle first.
+*/
+const INTRO_SPIN_BOOST = 14
+const INTRO_SPIN_SETTLE = 4
+
+/*
   Hover interaction. A hovered card grows to SCALE_UP × its slot size — ~8%
   at full hover, a clear nudge that still stays inside its slot spacing — and
   blends from grayscale to full colour (see the uGray uniform). Scaling about
@@ -135,6 +152,7 @@ const smoothstep = (a, b, x) => {
   const t = Math.min(1, Math.max(0, (x - a) / (b - a)))
   return t * t * (3 - 2 * t)
 }
+const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3)
 
 export function createCarousel(canvas, { images }) {
   const renderer = new THREE.WebGLRenderer({
@@ -241,6 +259,9 @@ export function createCarousel(canvas, { images }) {
   let pointerActive = false // stays false until the pointer first moves
   const smoothed = { x: 0, y: 0, offset: 0 }
   let drift = 0
+  // Intro-spin clock. Stays parked until startIntroSpin() — see INTRO_SPIN_*.
+  let introSpin = 0
+  let introSpinning = false
 
   /*
     Hover state. Each card carries a 0→1 progress that drives both the
@@ -277,6 +298,15 @@ export function createCarousel(canvas, { images }) {
     pointerActive = active
   }
 
+  /*
+    Kick the fast intro spin. Called when the wheel is actually uncovered rather
+    than on mount; idempotent, so a re-render that re-signals the reveal can't
+    restart the decay and make the row lurch back up to speed.
+  */
+  const startIntroSpin = () => {
+    introSpinning = true
+  }
+
   const resize = () => {
     const parent = canvas.parentElement
     if (!parent) return
@@ -292,8 +322,13 @@ export function createCarousel(canvas, { images }) {
   const render = (dt) => {
     const calm = calmMedia.matches
 
-    // Constant slow drift, plus a scroll-linked slide along the row.
-    if (!calm) drift += dt * DRIFT_PER_SEC
+    // Fast intro spin decaying to the idle drift, then the scroll-linked slide.
+    let spinBoost = 1
+    if (introSpinning && introSpin < INTRO_SPIN_SETTLE) {
+      introSpin = Math.min(INTRO_SPIN_SETTLE, introSpin + dt)
+      spinBoost = 1 + (INTRO_SPIN_BOOST - 1) * (1 - easeOutCubic(introSpin / INTRO_SPIN_SETTLE))
+    }
+    if (!calm) drift += dt * DRIFT_PER_SEC * spinBoost
     const targetOffset = drift + scrollProgress * SLOTS_PER_VIEWPORT
     smoothed.offset = lerp(smoothed.offset, targetOffset, 0.08)
 
@@ -379,5 +414,5 @@ export function createCarousel(canvas, { images }) {
 
   resize()
 
-  return { render, resize, setScroll, setPointer, setPointerActive, dispose }
+  return { render, resize, setScroll, setPointer, setPointerActive, startIntroSpin, dispose }
 }
