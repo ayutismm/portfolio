@@ -26,7 +26,24 @@
       "Bash(node *)",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5173/)",
       "mcp__ide__getDiagnostics",
-      "Bash(git -C \"D:/portfolio-website-mine\" status --short scripts/)"
+      "Bash(git -C \"D:/portfolio-website-mine\" status --short scripts/)",
+      "Bash(python -c \"import PIL; from PIL import Image; print\\('Pillow', PIL.__version__\\)\")",
+      "Bash(git rm *)",
+      "Bash(npx --yes svgo --config /dev/null \"public/characters/hero-character.svg\" -o \"public/characters/hero-character.svg\")",
+      "Bash(npx --yes svgo --config svgo.config.mjs \"public/characters/hero-character.svg\" -o \"public/characters/hero-character.svg\")",
+      "Bash(rm -f svgo.config.mjs)",
+      "Bash(awk '{printf \"%.2f MB\\\\n\", $1/1048576}')",
+      "Bash(grep -rn \"image.png\\\\|hero-shot\\\\|from '\\\\.\\\\/image\\\\|import.*image\" src --include=\"*.jsx\" --include=\"*.js\")",
+      "Bash(gzip -c dist/assets/index-*.js)",
+      "Bash(gzip -c dist/characters/hero-character.svg)",
+      "Bash(set *)",
+      "Bash(dwebp public/characters/hero-character.webp -o .tmp-check.png)",
+      "Bash(identify .tmp-check.png)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:5173/)",
+      "Bash(echo \"exit=$?\")",
+      "Bash(xxd)",
+      "Bash(node \"C:/Users/smash/.claude/skills/browser-automation/browser.mjs\" http://localhost:5173/ --script ./scripts/qa-intro.mjs --timeout 60000)",
+      "Read(//tmp/**)"
     ]
   }
 }

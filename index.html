@@ -17,11 +17,15 @@
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cstyle%3Erect%7Bfill:%23000%7D@media(prefers-color-scheme:dark)%7Brect%7Bfill:%23fff%7D%7D%3C/style%3E%3Crect x='2' y='2' width='9' height='20' rx='1'/%3E%3Crect x='13' y='2' width='9' height='9' rx='1'/%3E%3C/svg%3E"
     />
 
+    <!-- Preload the hero character so the intro's logo→character morph never
+         waits on the (large) artwork to decode. -->
+    <link rel="preload" as="image" href="/characters/hero-character.webp" />
+
     <!-- Fonts loaded early so the big display title never flashes a fallback face -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Anton&family=Montserrat:wght@400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Poppins:wght@400;500;600;700;800;900&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Anton&family=Montserrat:wght@400;500;600;700&family=Playfair+Display:ital,wght@1,500&family=Poppins:wght@600;700&display=swap"
       rel="stylesheet"
     />
 

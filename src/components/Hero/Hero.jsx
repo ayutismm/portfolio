@@ -178,7 +178,7 @@ export default function Hero({ revealed = true }) {
             <img
               className={styles.character}
               ref={charRef}
-              src="/characters/hero-character.svg"
+              src="/characters/hero-character.webp"
               alt=""
               aria-hidden="true"
             />

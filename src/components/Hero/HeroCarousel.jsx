@@ -19,62 +19,110 @@ import styles from './Hero.module.css'
 export default function HeroCarousel({ revealed = true, stageRef }) {
   const canvasRef = useRef(null)
   const carouselRef = useRef(null)
+  /*
+    The reveal can fire while the Three.js chunk is still downloading, so it is
+    mirrored into a ref the setup below can read the moment the carousel is
+    ready — otherwise a slow network would leave the intro spin unstarted.
+  */
+  const revealedRef = useRef(revealed)
+
+  useEffect(() => {
+    revealedRef.current = revealed
+  }, [revealed])
 
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
 
-    let carousel
-    try {
-      carousel = createCarousel(canvas, { images: carouselScreens })
-    } catch (err) {
-      // No WebGL (old browser, blocklisted driver, headless). The hero still
-      // reads fine without it, so degrade instead of blanking the page.
-      console.warn('WebGL unavailable — hero carousel disabled.', err)
-      return
-    }
-    carouselRef.current = carousel
+    let disposed = false
+    let carousel = null
 
-    const tick = (time, deltaMs) => carousel.render(deltaMs / 1000)
-    gsap.ticker.add(tick)
+    const tick = (time, deltaMs) => carousel?.render(deltaMs / 1000)
+
+    /*
+      The hero is pinned (position: sticky; top: 0) and gets covered by the
+      opaque case stack once the page has scrolled ~a full viewport. The canvas
+      stays geometrically "in view" the whole way down, so an IntersectionObserver
+      never reports it leaving — gate the render loop on scroll instead: draw while
+      the hero is actually visible, drop the tick while an opaque section hides it.
+      This is the single biggest mobile-GPU saving, and it's invisible: the wheel
+      simply isn't being drawn while no one can see it.
+    */
+    let ticking = true
+    const setTicking = (on) => {
+      if (on && !ticking) {
+        gsap.ticker.add(tick)
+        ticking = true
+      } else if (!on && ticking) {
+        gsap.ticker.remove(tick)
+        ticking = false
+      }
+    }
 
     const onScroll = () => {
       // Normalise hero scroll into 0→1 over the first viewport of travel.
       const p = Math.min(1, window.scrollY / window.innerHeight)
-      carousel.setScroll(p)
+      carousel?.setScroll(p)
+      setTicking(window.scrollY < window.innerHeight)
     }
 
     const onPointerMove = (e) => {
       const x = (e.clientX / window.innerWidth) * 2 - 1
       const y = (e.clientY / window.innerHeight) * 2 - 1
-      carousel.setPointer(x, y)
+      carousel?.setPointer(x, y)
     }
 
     // Leaving the viewport ends the hover: without this, cards keep lighting
     // up as they drift through the cursor's last known position.
-    const onPointerLeave = () => carousel.setPointerActive(false)
+    const onPointerLeave = () => carousel?.setPointerActive(false)
 
-    const onResize = () => carousel.resize()
+    const onResize = () => carousel?.resize()
 
     // Observe the container too: the canvas is sized from its parent, which can
     // change without a window resize (e.g. scrollbar appearing, font reflow).
     const ro = new ResizeObserver(onResize)
-    if (canvas.parentElement) ro.observe(canvas.parentElement)
 
-    window.addEventListener('scroll', onScroll, { passive: true })
-    window.addEventListener('pointermove', onPointerMove, { passive: true })
-    document.documentElement.addEventListener('pointerleave', onPointerLeave)
-    window.addEventListener('resize', onResize)
-    onScroll()
-
-    return () => {
+    const teardown = () => {
       gsap.ticker.remove(tick)
       ro.disconnect()
       window.removeEventListener('scroll', onScroll)
       window.removeEventListener('pointermove', onPointerMove)
       document.documentElement.removeEventListener('pointerleave', onPointerLeave)
       window.removeEventListener('resize', onResize)
-      carousel.dispose()
+    }
+
+    createCarousel(canvas, { images: carouselScreens })
+      .then((c) => {
+        if (disposed) {
+          c.dispose()
+          return
+        }
+        carousel = c
+        carouselRef.current = c
+
+        if (canvas.parentElement) ro.observe(canvas.parentElement)
+        gsap.ticker.add(tick)
+        window.addEventListener('scroll', onScroll, { passive: true })
+        window.addEventListener('pointermove', onPointerMove, { passive: true })
+        document.documentElement.addEventListener('pointerleave', onPointerLeave)
+        window.addEventListener('resize', onResize)
+
+        // The intro may have revealed the wheel while the chunk was still
+        // loading — start the spin now that it exists. Idempotent, so the
+        // dedicated effect below can also call it without a double start.
+        if (revealedRef.current) c.startIntroSpin()
+        onScroll()
+      })
+      .catch((err) => {
+        // No WebGL (old browser, blocklisted driver, headless). The hero still
+        // reads fine without it, so degrade instead of blanking the page.
+        console.warn('WebGL unavailable — hero carousel disabled.', err)
+      })
+
+    return () => {
+      disposed = true
+      teardown()
+      carousel?.dispose()
       carouselRef.current = null
     }
   }, [])

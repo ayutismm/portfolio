@@ -19,7 +19,11 @@ gsap.registerPlugin(ScrollTrigger)
 export function useLenis() {
   useEffect(() => {
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    if (prefersReduced) return
+    // Touch scrolling is left native (syncTouch is off, the OS applies its own
+    // inertia), so on coarse-pointer devices Lenis would only run a useless RAF
+    // loop — skip it entirely there, not just under reduced motion.
+    const touchOnly = window.matchMedia('(pointer: coarse)').matches
+    if (prefersReduced || touchOnly) return
 
     const lenis = new Lenis({
       duration: 1.1,

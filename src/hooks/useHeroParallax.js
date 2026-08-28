@@ -43,14 +43,32 @@ export function useHeroParallax(ref) {
       target.y = (e.clientY / window.innerHeight) * 2 - 1
     }
 
+    /*
+      Write the two vars only when their string value actually changes. The
+      lerp never quite reaches the target, but once it's within 0.00005 the
+      toFixed(4) string is stable — so after the pointer settles we stop poking
+      the style tree every frame (the DOM layers and the card stage both hold a
+      still pose), instead of invalidating composited layers for a no-op write.
+    */
+    let lastX = ''
+    let lastY = ''
+
     const tick = () => {
       // Reduced motion eases the layers home rather than snapping them.
       const tx = calmMedia.matches ? 0 : target.x
       const ty = calmMedia.matches ? 0 : target.y
       current.x = current.x + (tx - current.x) * LERP
       current.y = current.y + (ty - current.y) * LERP
-      el.style.setProperty('--hero-cursor-x', current.x.toFixed(4))
-      el.style.setProperty('--hero-cursor-y', current.y.toFixed(4))
+      const sx = current.x.toFixed(4)
+      const sy = current.y.toFixed(4)
+      if (sx !== lastX) {
+        lastX = sx
+        el.style.setProperty('--hero-cursor-x', sx)
+      }
+      if (sy !== lastY) {
+        lastY = sy
+        el.style.setProperty('--hero-cursor-y', sy)
+      }
     }
 
     window.addEventListener('pointermove', onPointerMove, { passive: true })

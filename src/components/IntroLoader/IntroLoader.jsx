@@ -138,7 +138,7 @@ export default function IntroLoader({ onReveal }) {
         <img
           ref={charRef}
           className={styles.character}
-          src="/characters/hero-character.svg"
+          src="/characters/hero-character.webp"
           alt=""
           aria-hidden="true"
         />

@@ -1,4 +1,3 @@
-import * as THREE from 'three'
 import {
   SLOT_W,
   CAM_FOV,
@@ -137,11 +136,25 @@ const smoothstep = (a, b, x) => {
 }
 const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3)
 
-export function createCarousel(canvas, { images }) {
+export async function createCarousel(canvas, { images }) {
+  /*
+    Three.js is loaded lazily. The wheel is the only consumer and sits behind
+    the ~4s intro, so a top-level import would push the ~650 KB library onto
+    the critical path for nothing. The dynamic import below lets Vite split it
+    into its own chunk that downloads during the intro, so first paint and the
+    intro start without waiting on Three to parse.
+  */
+  const THREE = await import('three')
+
+  // Touch devices pay a much higher fill-rate cost for both MSAA and high-DPR
+  // backing stores. The card edges are already rounded in the fragment shader
+  // (rounded-box SDF), so MSAA is nearly invisible on them — drop it on phones.
+  const coarsePointer = window.matchMedia('(pointer: coarse)').matches
+
   const renderer = new THREE.WebGLRenderer({
     canvas,
     alpha: true, // the page's white paper shows through
-    antialias: true,
+    antialias: !coarsePointer,
     powerPreference: 'high-performance',
   })
   renderer.setClearAlpha(0)
@@ -291,7 +304,7 @@ export function createCarousel(canvas, { images }) {
     if (!parent) return
     const { clientWidth: w, clientHeight: h } = parent
     if (!w || !h) return
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, coarsePointer ? 1.5 : 2))
     renderer.setSize(w, h, false)
     camera.aspect = w / h
     camera.position.z = camZFor(w, h)

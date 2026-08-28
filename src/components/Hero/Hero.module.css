@@ -67,23 +67,22 @@
   z-index: 2;
   width: clamp(80px, 18vw, 340px);
   pointer-events: none;
-  /* Graduated blur: the mask fades the effect out toward the centre so the
-     wheel dissolves into the page instead of ending on a hard crop line. */
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+  /*
+    Graduated dissolve. A plain white→transparent gradient fades the wheel's
+    edges into the paper so the row ends on a soft crop instead of a hard line.
+    This used to be backdrop-filter: blur(18px), which is a real mobile-GPU
+    cost for an effect that's imperceptible here — the card shader already
+    fades the outer slots to transparent before they reach this band.
+  */
 }
 
 .lensLeft {
   left: 0;
-  mask-image: linear-gradient(to right, #000 0%, transparent 100%);
-  -webkit-mask-image: linear-gradient(to right, #000 0%, transparent 100%);
   background: linear-gradient(to right, rgb(255 255 255 / 0.85), transparent);
 }
 
 .lensRight {
   right: 0;
-  mask-image: linear-gradient(to left, #000 0%, transparent 100%);
-  -webkit-mask-image: linear-gradient(to left, #000 0%, transparent 100%);
   background: linear-gradient(to left, rgb(255 255 255 / 0.85), transparent);
 }
 
@@ -283,11 +282,21 @@
 /* ---- 5. explore cue ---- */
 
 .cue {
-  position: absolute;
+  /*
+    position: fixed takes the cue out of the hero's stacking context (the
+    hero creates one via position: sticky + z-index: 1 and isolation: isolate),
+    so its z-index is resolved at the page level rather than being capped
+    inside the hero's z:1 context. 201 sits above the IntroLoader (z:200) so
+    the cue paints in front of the loader's character copy throughout the
+    crossfade, and well below the click-burst (z:9999) so the burst still
+    paints over it. The cue stays anchored to the viewport's bottom edge as
+    the user scrolls past the hero.
+  */
+  position: fixed;
   left: 50%;
   bottom: 0;
   transform: translateX(-50%);
-  z-index: 5;
+  z-index: 201;
   display: flex;
   flex-direction: column;
   align-items: center;
