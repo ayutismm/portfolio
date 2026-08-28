@@ -3,7 +3,13 @@
   in the right state at the right time:
 
     logo (red, blank paper, wheel covered) → morph → subject alone
-      → backdrop lifts, wheel revealed spinning fast → site chrome in
+      → backdrop lifts AND wheel + title + chrome arrive on the SAME beat
+        → sheet fades, figure handed off
+
+  The last assertion is the single-reveal one: `onReveal` is one beat, so the
+  first sample where the backdrop is no longer fully opaque must also be the
+  first sample where the title is visible — no second beat ~1.3s later, no
+  staggered glyphs.
 
   Written after two bugs that reading the source would not have caught: a
   `fromTo` whose from-state rendered at build time and shrank the morph target,
@@ -51,27 +57,35 @@ export default async function run(page) {
   const subjectBeforeWheel = series.some(
     (s) => s.loaderCharOpacity === 1 && s.backdropOpacity === 1,
   )
-  // ...and the wheel must be uncovered before any site chrome arrives.
-  const wheelRevealedBeforeSite = series.every(
+  // ...and no site chrome arrives while the backdrop is still fully opaque.
+  const siteHeldBack = series.every(
     (s) => !(s.backdropOpacity === 1 && s.headerOpacity > 0),
   )
-  const siteHeldBack = series.every((s) => s.sheetOpacity !== 1 || s.headerOpacity === 0)
+  // Single reveal: the backdrop lift and the first title opacity land on the
+  // same sample tick (they would be ~5 samples apart under the old two-beat
+  // intro).
+  const backdropLift = series.findIndex((s) => s.backdropOpacity < 1)
+  const titleArrive = series.findIndex((s) => s.titleOpacity > 0)
+  const sameTickReveal =
+    backdropLift !== -1 && titleArrive !== -1 && backdropLift === titleArrive
 
   return {
     pass:
       logoAlone &&
       morphed &&
       subjectBeforeWheel &&
-      wheelRevealedBeforeSite &&
       siteHeldBack &&
+      sameTickReveal &&
       final.headerOpacity === 1 &&
       final.heroCharOpacity === 1 &&
       final.titleOpacity === 1,
     logoAlone,
     morphed,
     subjectBeforeWheel,
-    wheelRevealedBeforeSite,
     siteHeldBack,
+    sameTickReveal,
+    backdropLift,
+    titleArrive,
     logoColor: series[0].logoColor,
     final,
     series: series.map((s) => ({
@@ -81,6 +95,7 @@ export default async function run(page) {
       char: s.loaderCharOpacity,
       sheet: s.sheetOpacity,
       header: s.headerOpacity,
+      title: s.titleOpacity,
     })),
   }
 }

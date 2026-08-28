@@ -1,4 +1,16 @@
 import * as THREE from 'three'
+import {
+  SLOT_W,
+  CAM_FOV,
+  CAM_Z_WIDE,
+  TILT_YAW_RAD,
+  TILT_PITCH_RAD,
+  STAGE_SLIDE_X,
+  STAGE_SLIDE_Y,
+  depthAtSlot,
+  yawAtSlot,
+  camZFor,
+} from './arc-surface'
 
 /*
   The hero's 3D screen row.
@@ -33,38 +45,10 @@ const PLANE_W = PLANE_H * PHONE_ASPECT
 const CORNER_RADIUS = 0.11
 
 /*
-  Arc shape. A card's slot `s` is 0 at the centre of the row, ±1 for its
-  immediate neighbours, and so on:
+  Arc shape lives in utils/arc-surface.js — the single source of truth shared
+  with the DOM type so the cards and the text stay on the same surface. What
+  remains here is the row's own layout: slot count, fade band, drift.
 
-      x = s * SLOT_W                    evenly spaced across the row
-      z = DEPTH * |s| ** DEPTH_POW      pulled toward the camera as it moves out
-
-  Spacing is even in x rather than along the arc, so the row keeps widening
-  instead of curling back on itself the way a circle would.
-
-  DEPTH_POW just above 1 keeps the middle of the row nearly flat while the ends
-  pull forward. Measured off the reference hero, cards one slot out are ~1.08x
-  the height of the centre card, two out ~1.23x, three out ~1.38x; these values
-  track that within a couple of percent. Pushing DEPTH_POW higher makes the end
-  cards loom at the camera instead of receding into the blur.
-*/
-const SLOT_W = 1.55
-const DEPTH = 0.9
-const DEPTH_POW = 1.3
-
-/*
-  Rotation follows the arc's surface normal: each card lies on the curved
-  surface, so only the centre card faces the viewer head-on and the side cards
-  angle inward toward the centre of the row — the "spokes of a wheel" read.
-  The surface normal of the curve z = DEPTH·|s|^DEPTH_POW is atan(slope) off
-  the +Z axis, which would put the ends ~50° and squish them into slivers.
-  FAN_RATIO scales that back so the turn is clearly visible but the screens
-  stay readable; the outer edge of every card still leads toward the camera,
-  which is what sells the curve.
-*/
-const FAN_RATIO = 0.7
-
-/*
   Slot count. Enough to cover the viewport (|s| ≲ 3.2) plus the fade band, so
   cards are invisible by the time they recycle. More screens than that means
   more slots rather than repeated textures.
@@ -103,10 +87,9 @@ const INTRO_SPIN_SETTLE = 4
 */
 const SCALE_UP = 1.08
 
-// Camera distance. 11 frames ~6.7 units of height at the centre card; narrow
-// viewports pull back so the row still reads as a row instead of one phone.
-const CAM_Z_WIDE = 11
-const CAM_Z_NARROW = 15
+// Camera distance: CAM_Z_WIDE frames ~6.7 units of height at the centre card;
+// narrow viewports pull back (CAM_Z_NARROW) so the row still reads as a row
+// instead of one phone. Both live in arc-surface.js.
 
 const VERT = /* glsl */ `
   varying vec2 vUv;
@@ -164,7 +147,7 @@ export function createCarousel(canvas, { images }) {
   renderer.setClearAlpha(0)
 
   const scene = new THREE.Scene()
-  const camera = new THREE.PerspectiveCamera(34, 1, 0.1, 100)
+  const camera = new THREE.PerspectiveCamera(CAM_FOV, 1, 0.1, 100)
   camera.position.set(0, 0, CAM_Z_WIDE)
   camera.lookAt(0, 0, 0)
 
@@ -239,14 +222,10 @@ export function createCarousel(canvas, { images }) {
 
     mesh.position.x = s * SLOT_W
     // Concave arc: positive Z pulls outer cards FORWARD toward the camera.
-    mesh.position.z = DEPTH * a ** DEPTH_POW
-
-    // Slope magnitude for the rotation
-    const slope = (DEPTH * DEPTH_POW * a ** (DEPTH_POW - 1)) / SLOT_W
-    /*
-      Cards face slightly outward so each card's face stays readable.
-    */
-    mesh.rotation.y = -Math.sign(s) * Math.atan(slope) * FAN_RATIO
+    mesh.position.z = depthAtSlot(s)
+    // Each card lies ON the surface, so its yaw is the surface normal's angle —
+    // the same curve the DOM glyphs ride (see arc-surface.js).
+    mesh.rotation.y = yawAtSlot(s)
   }
 
   // Map any offset slot into [-COUNT/2, COUNT/2) so cards recycle end to end.
@@ -315,7 +294,7 @@ export function createCarousel(canvas, { images }) {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     renderer.setSize(w, h, false)
     camera.aspect = w / h
-    camera.position.z = w / h < 1 ? CAM_Z_NARROW : CAM_Z_WIDE
+    camera.position.z = camZFor(w, h)
     camera.updateProjectionMatrix()
   }
 
@@ -343,38 +322,33 @@ export function createCarousel(canvas, { images }) {
     }
 
     /*
-      Pointer parallax. The cards are the deepest layer in the composition, so
-      they travel the least — a small horizontal slide plus a gentle yaw and
-      pitch, all in the same direction the DOM layers above move (see
-      useHeroParallax, which reads the same pointer with a matching lerp).
+      Pointer parallax. The stage slides toward the pointer AND tilts toward it —
+      a screen-space translation plus a gentle yaw and pitch, all in the same
+      direction the DOM layers above move (see useHeroParallax, which reads the
+      same pointer with a matching lerp).
 
-      Horizontal (X): the whole stage slides and yaws, so every card — the
-      centre "main subject" included — tracks the pointer left and right. The
-      slide matters: a yaw alone pins the centre card in place, and a
-      motionless middle reads as a bug.
+      Translation (X and Y): the whole stage shifts so the composition tracks
+      the pointer rather than only rotating in place. X follows the pointer
+      directly; Y is negated because Three's +Y points UP while the pointer's
+      +Y points DOWN (the same flip the pitch uses). The DOM text applies the
+      SAME slide, converted to screen px via pxPerWorldUnit (--hero-slide-x/y
+      in useArcSurface), so the title and cards travel together.
 
-      Vertical (Y): deliberately NO y-translation of the stage. Instead the
-      stage pitches about its own origin, which the centre card sits on — so
-      the focal card holds its vertical position while the cards fanning out to
-      either side rise and dip. That gives the row a genuine y-axis parallax
-      without lifting the hero's centre photo off its mark.
-
-      Translation is in world units; at the centre card's distance one unit is
-      ~116px of screen, so 0.08 lands just under the title's 18px of travel.
+      Tilt: the yaw and pitch lean the row toward the pointer on top of the
+      slide. Both are negated so the row leans TOWARD the pointer (positive
+      rotation.y / rotation.x turn the right / top edge away from the camera).
+      The DOM layerScene applies the same tilt with its own sign conventions —
+      see TILT_*_CSS in arc-surface.js, which exist because CSS rotateX's +Y is
+      DOWN while Three's is UP, so only the pitch sign differs between the two.
     */
     const px = calm ? 0 : pointer.x
     const py = calm ? 0 : pointer.y
     smoothed.x = lerp(smoothed.x, px, 0.06)
     smoothed.y = lerp(smoothed.y, py, 0.06)
-    stage.position.x = smoothed.x * 0.08
-    // Yaw tracks the pointer; negated so the cards tilt in the same direction
-    // as the DOM overlay (CSS rotateY positive turns the left edge toward the
-    // viewer, while Three.js positive rotation.y turns the right edge toward
-    // the camera — opposite conventions, hence the sign flip).
-    stage.rotation.y = smoothed.x * -0.055
-    // Pitch, not translate: the centre card is on this axis and stays put in Y
-    // while the outer cards carry the vertical travel.
-    stage.rotation.x = smoothed.y * -0.06
+    stage.position.x = smoothed.x * STAGE_SLIDE_X
+    stage.position.y = smoothed.y * -STAGE_SLIDE_Y
+    stage.rotation.y = smoothed.x * -TILT_YAW_RAD
+    stage.rotation.x = smoothed.y * -TILT_PITCH_RAD
 
     /*
       Hover raycast. The cards' world matrices must include this frame's slot

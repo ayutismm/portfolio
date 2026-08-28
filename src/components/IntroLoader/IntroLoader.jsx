@@ -4,49 +4,47 @@ import Logo from '../Header/Logo'
 import styles from './IntroLoader.module.css'
 
 /*
-  First-load intro. Reveals the composition one layer at a time:
+  First-load intro. Reveals the composition in one move after the subject lands:
 
     1  the brand mark assembles in red on blank paper and holds, long enough to
        register as the brand before it turns into anything else
     2  it grows and sweeps down into the hero character, crossfading, so the mark
        *becomes* the subject
     3  the subject holds alone
-    4  the opaque backdrop lifts — only now does the 3D wheel appear, launching
-       fast and easing down behind the figure (see startIntroSpin)
-    5  the sheet fades and the rest of the site comes in underneath
+    4  the opaque backdrop lifts — the 3D wheel appears (launching fast and
+       easing down behind the figure, see startIntroSpin) AND the site chrome
+       arrives together, all from behind the same fading sheet
+    5  the sheet fades out, handing the figure over to the identical hero copy
 
   Nothing but the mark is on screen for step 1: the backdrop covers the wheel and
-  Header/Hero hold their own chrome at opacity 0 until the hand-off. Otherwise the
+  Header/Hero hold their own chrome at opacity 0 until `onReveal`. Otherwise the
   intro reads as the finished site with a logo floating over it.
 
-  `onSceneReveal` and `onDone` fire as their fades *start*, not after, so the
-  layers underneath crossfade with the ones on top instead of popping in behind a
-  sheet that has already gone.
+  `onReveal` fires as the backdrop fade *starts*, not after, so the wheel and the
+  chrome underneath crossfade with the sheet on top instead of popping in behind
+  a sheet that has already gone.
 
-  Callbacks are read through refs so a new callback identity never re-runs the
-  timeline (App re-creates the props on every render). Under reduced motion we
+  The callback is read through a ref so a new callback identity never re-runs the
+  timeline (App re-creates the prop on every render). Under reduced motion we
   skip straight to done.
 */
-export default function IntroLoader({ onSceneReveal, onDone }) {
+export default function IntroLoader({ onReveal }) {
   const rootRef = useRef(null)
   const backdropRef = useRef(null)
   const logoRef = useRef(null)
   const charRef = useRef(null)
   const [hidden, setHidden] = useState(false)
 
-  const onSceneRevealRef = useRef(onSceneReveal)
-  const onDoneRef = useRef(onDone)
+  const onRevealRef = useRef(onReveal)
   useEffect(() => {
-    onSceneRevealRef.current = onSceneReveal
-    onDoneRef.current = onDone
-  }, [onSceneReveal, onDone])
+    onRevealRef.current = onReveal
+  }, [onReveal])
 
   useEffect(() => {
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     if (prefersReduced) {
       setHidden(true)
-      onSceneRevealRef.current?.()
-      onDoneRef.current?.()
+      onRevealRef.current?.()
       return
     }
 
@@ -110,15 +108,14 @@ export default function IntroLoader({ onSceneReveal, onDone }) {
       // 3. The subject holds alone on blank paper.
       .to({}, { duration: 0.45 })
 
-      // 4. Lift the backdrop: the wheel appears behind the figure and starts its
-      //    fast spin now, as it becomes visible.
-      .add(() => onSceneRevealRef.current?.())
+      // 4. Lift the backdrop. The wheel appears behind the figure and starts its
+      //    fast spin now, and the site chrome arrives with it — one reveal beat.
+      .add(() => onRevealRef.current?.())
       .to(backdrop, { opacity: 0, duration: 0.75, ease: 'power2.inOut' })
 
       // 5. Let the wheel be seen slowing, then hand the figure off to the hero
       //    underneath as this sheet fades.
       .to({}, { duration: 0.55 })
-      .add(() => onDoneRef.current?.())
       .to(root, {
         opacity: 0,
         duration: 0.6,

@@ -8,10 +8,11 @@
      4  character  ← deliberately in front of the title, as in the reference
      5  explore cue
 
-   Layers 3–4 each sit in a parallax wrapper (.layerTitle / .layerAside /
-   .layerCharacter) that translates off --hero-cursor-x/y, written per frame by
-   useHeroParallax onto this section. The cards do their own equivalent tilt in
-   the WebGL scene, so the whole composition swings together. The header is
+   Layers 3–4 each sit in a parallax wrapper (.layerScene / .layerCharacter)
+   driven off --hero-cursor-x/y, written per frame by useHeroParallax onto this
+   section. .layerScene (title + taglines) tilts and slides to match the WebGL
+   stage — same angles, same centre pivot, same x-slide — while .layerCharacter
+   leans about its own low pivot so the figure stays planted. The header is
    fixed and outside this section, so it never inherits the vars and stays put.
    ============================================================ */
 
@@ -89,19 +90,10 @@
   inset: 0;
   z-index: 3;
   pointer-events: none;
-  /* The whole DOM scene — title, taglines and figure — tilts toward the pointer
-     in 3D. This is the reference's signature move: the composition leans as one
-     plane rather than the layers sliding flat. Perspective lives on .hero; here
-     we only rotate. The origin sits low-of-centre so the figure's planted feet
-     barely travel while the title up top swings furthest, which reads as the
-     scene pivoting around the person. The per-layer transls below still add
-     depth parallax on top of this shared tilt. */
-  transform: rotateX(calc(var(--hero-cursor-y, 0) * -6deg))
-    rotateY(calc(var(--hero-cursor-x, 0) * 9deg));
-  transform-origin: 50% 64%;
-  /* Keep the layers (and the title's glyphs within them) in the same 3D space
-     as this tilt, so the title's per-glyph translateZ bends with the scene
-     instead of being flattened back into this plane. */
+  /* A plain 3D-space wrapper: it no longer carries the tilt. The scene pivot
+     (text + cards) and the figure's planted-feet pivot differ, so the two
+     transforms live on .layerScene and .layerCharacter below rather than one
+     shared rotation that can only have one origin. */
   transform-style: preserve-3d;
   will-change: transform;
 }
@@ -114,17 +106,22 @@
    shared node would mean the entrance tween and the parallax clobbering each
    other every frame.
 
-   Travel scales with how near the layer reads: the title sits deepest and moves
-   least, the taglines further. Both track the pointer on *both* axes, adding a
-   little depth parallax on top of the whole-scene tilt that .overlay applies.
+   Title and taglines share ONE wrapper (.layerScene) whose transform matches
+   the WebGL stage exactly: the same tilt angles (shared via arc-surface.js),
+   the same centre pivot (50% 50% — the stage rotates about its own origin,
+   which projects to viewport centre) and the same screen-space slide, converted
+   to px by useArcSurface (--hero-slide-x/y). Under preserve-3d a child's
+   translateZ magnifies that tilt, so the nearer taglines travel further than
+   the deeper title — no hand-tuned per-layer amounts, and it stays in lockstep
+   with the card surface.
 
    The character carries NO translate of its own. It's the focal subject,
-   anchored to the bottom edge; instead of sliding it simply tilts with the
-   scene (see .overlay), so it leans toward the pointer while its feet stay
-   planted rather than tracking sideways across the floor. */
+   anchored to the bottom edge; instead of sliding it tilts about a low-of-centre
+   pivot so it leans toward the pointer while its feet stay planted rather than
+   tracking sideways across the floor. It reproduces the tilt the overlay used
+   to carry, with the same 50% 64% origin, so it looks exactly as before. */
 
-.layerTitle,
-.layerAside,
+.layerScene,
 .layerCharacter {
   position: absolute;
   inset: 0;
@@ -132,21 +129,32 @@
   will-change: transform;
 }
 
-.layerTitle {
+.layerScene {
   z-index: 3;
-  transform: translate3d(calc(var(--hero-cursor-x, 0) * 18px), calc(var(--hero-cursor-y, 0) * 16px), 0);
-  /* Pass the hero perspective through to the glyphs' translateZ. */
+  /* rotate is applied to the point first, then the translate — matching
+     Three.js's stage (rotation about the origin, then position). The yaw is
+     negative and the pitch positive because CSS rotateX's +Y points down while
+     Three's points up. */
+  transform: translate3d(
+      calc(var(--hero-cursor-x, 0) * var(--hero-slide-x, 0px)),
+      calc(var(--hero-cursor-y, 0) * var(--hero-slide-y, 0px)),
+      0
+    )
+    rotateX(calc(var(--hero-cursor-y, 0) * var(--hero-tilt-pitch, 3.438deg)))
+    rotateY(calc(var(--hero-cursor-x, 0) * var(--hero-tilt-yaw, -3.151deg)));
+  transform-origin: 50% 50%;
+  /* Pass the hero perspective through to the glyphs' and taglines' translateZ. */
   transform-style: preserve-3d;
-}
-
-.layerAside {
-  z-index: 3;
-  transform: translate3d(calc(var(--hero-cursor-x, 0) * 26px), calc(var(--hero-cursor-y, 0) * 22px), 0);
 }
 
 .layerCharacter {
   z-index: 4;
-  /* No translate — the figure tilts with the scene and stays anchored. */
+  /* Lean toward the pointer about a low-of-centre pivot (the same tilt and
+     origin .overlay used to apply), so the figure's planted feet barely travel
+     while the head swings furthest. */
+  transform: rotateX(calc(var(--hero-cursor-y, 0) * var(--hero-tilt-pitch, 3.438deg)))
+    rotateY(calc(var(--hero-cursor-x, 0) * var(--hero-tilt-yaw, -3.151deg)));
+  transform-origin: 50% 64%;
 }
 
 /* ---- 3. display title ---- */
@@ -156,7 +164,7 @@
   /* Positioned in the upper-middle, below the header with breathing room. */
   top: clamp(4.5rem, 8vh, 7rem);
   left: 50%;
-  transform: translateX(-50%);
+  transform: translateX(-50%) translateY(0.15em);
   z-index: 3;
   width: max-content;
   max-width: 96vw;
@@ -177,19 +185,23 @@
   display: flex;
   align-items: flex-end;
   /* Clip the char rise-in without hiding the arc's vertical offsets. */
-  padding-bottom: 0.12em;
+  padding-bottom: 0.20em;
   /* Flex container must also preserve 3D or the glyph depths collapse. */
   transform-style: preserve-3d;
 }
 
 .titleChar {
   display: inline-block;
-  /* The depth (translateZ) and tangent yaw (rotateY) are appended after the
-     existing arch transforms so the glyph drops for the arc, then travels into
-     the scene; both are in the hero's perspective via the preserve-3d chain. */
-  transform: rotate(var(--rot)) translateY(var(--dy)) translateZ(var(--dz)) rotateY(var(--rotY));
+  /* The depth (translateZ) is appended after the arch transforms so the glyph
+     drops for the arc, then travels into the scene along the shared surface.
+     --dz is written by useArcSurface; the fallback keeps the first paint safe
+     before that hook runs. The glyphs stay upright — only the z-depth is
+     applied, not the surface-normal yaw that would turn them tangent to the
+     curve and read as a tilt. */
+  --dz: 0px;
+  transform: translateY(var(--dy)) translateZ(var(--dz));
   transform-origin: center bottom;
-  /* Hidden until the intro hands off; the reveal staggers these to full opacity. */
+  /* Hidden until the intro hands off; the reveal fades these in as one group. */
   opacity: 0;
   will-change: transform;
 }
@@ -224,27 +236,49 @@
   position: absolute;
   left: 0;
   right: 0;
-  bottom: clamp(12%, 18vh, 24%);
+  bottom: clamp(14%, 20vh, 26%);
   z-index: 3;
   display: flex;
   justify-content: space-between;
   padding: 0 clamp(1.5rem, 8vw, 10rem);
   font-family: var(--font-alt);
-  font-size: clamp(0.7rem, 1.15vw, 1.05rem);
+  /* Font size moves to the spans: they shrink by --arc-shrink to cancel the
+     perspective magnification of their depth, keeping the net rendered size
+     unchanged. --fs-aside is the base; the media query below retunes it. */
+  --fs-aside: clamp(0.7rem, 1.15vw, 1.05rem);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: var(--tracking-wide);
   color: var(--ink);
-  /* Hidden until the intro hands off; the reveal fades them in. */
+  /* The taglines sit on the arc surface too, so this container must preserve
+     3D for the spans' translateZ (a flat intermediate collapses their depth —
+     verified). Opacity lives on the spans: animating it here would also force
+     this node flat and snap the depth back. */
+  transform-style: preserve-3d;
+}
+
+.asideLeft,
+.asideRight {
+  font-size: calc(var(--fs-aside) * var(--arc-shrink, 1));
+  /* The spans are placed on the surface: a flat 2D tilt (--tilt) plus the
+     measured correction / depth / yaw written by useArcSurface. --ax pulls
+     them inward so they project back onto their layout spot; --dz / --rotY
+     place them on the curve. */
+  --ax: 0px;
+  --dz: 0px;
+  --rotY: 0rad;
+  transform: rotate(var(--tilt)) translateX(var(--ax)) translateZ(var(--dz)) rotateY(var(--rotY));
+  transform-origin: center;
+  /* Hidden until the intro hands off; revealed as leaves, not the container. */
   opacity: 0;
 }
 
 .asideLeft {
-  transform: rotate(-4deg);
+  --tilt: -4deg;
 }
 
 .asideRight {
-  transform: rotate(3deg);
+  --tilt: 3deg;
 }
 
 /* ---- 5. explore cue ---- */
@@ -355,8 +389,9 @@
 
 @media (max-width: 900px) {
   .aside {
-    bottom: 15%;
-    font-size: 0.66rem;
+    bottom: 18%;
+    /* Retune the base; the spans still multiply by --arc-shrink. */
+    --fs-aside: 0.66rem;
   }
 
   .character {
@@ -370,5 +405,13 @@
      rather than stacking them over the character. */
   .aside {
     display: none;
+  }
+
+  /* The vw-based --fs-hero floor leaves the heading tiny on phones; scale it
+     back up and drop it lower so it reads as the hero's display type rather
+     than a small label pinned under the header. */
+  .title {
+    top: clamp(4.5rem, 20vh, 8rem);
+    font-size: clamp(2.4rem, 12vw, 3.75rem);
   }
 }

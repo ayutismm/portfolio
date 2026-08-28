@@ -7,7 +7,7 @@ import styles from './Header.module.css'
 
 const TABS = ['Design', 'About']
 
-export default function Header({ introDone = true }) {
+export default function Header({ revealed = true }) {
   const [activeTab, setActiveTab] = useState(0)
   const [copied, setCopied] = useState(false)
   const [panelOpen, setPanelOpen] = useState(false)
@@ -51,7 +51,7 @@ export default function Header({ introDone = true }) {
         data-inverted={atFooter ? '' : undefined}
         // Held out of sight until the intro hands off, so the loader reads as a
         // loader instead of as the finished site with a logo floating over it.
-        data-intro-pending={introDone ? undefined : ''}
+        data-intro-pending={revealed ? undefined : ''}
         aria-label="Main navigation"
       >
         <div className={styles.brand}>

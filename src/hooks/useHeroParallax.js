@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import gsap from 'gsap'
+import { TILT_YAW_CSS, TILT_PITCH_CSS } from '../utils/arc-surface'
 
 /*
   Pointer parallax for the hero.
@@ -26,6 +27,12 @@ export function useHeroParallax(ref) {
   useEffect(() => {
     const el = ref.current
     if (!el) return
+
+    // The overlay's tilt amplitude is set here once rather than hardcoded in
+    // CSS, so it shares the single definition in arc-surface.js with the WebGL
+    // stage. The CSS fallback values keep it working before this hook runs.
+    el.style.setProperty('--hero-tilt-yaw', TILT_YAW_CSS)
+    el.style.setProperty('--hero-tilt-pitch', TILT_PITCH_CSS)
 
     const calmMedia = window.matchMedia('(prefers-reduced-motion: reduce)')
     const target = { x: 0, y: 0 }

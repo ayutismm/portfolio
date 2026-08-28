@@ -11,12 +11,12 @@ import styles from './Hero.module.css'
   than a private requestAnimationFrame, so scroll position and the 3D frame are
   always from the same tick — otherwise the wheel visibly lags the scroll.
 
-  `sceneRevealed` is the intro's signal that the wheel has just been uncovered;
-  it starts the fast spin (see startIntroSpin in utils/three-helpers.js). It
+  `revealed` is the intro's signal that the wheel has just been uncovered; it
+  starts the fast spin (see startIntroSpin in utils/three-helpers.js). It
   defaults to true so the wheel behaves normally if this ever renders without an
   intro in front of it.
 */
-export default function HeroCarousel({ sceneRevealed = true }) {
+export default function HeroCarousel({ revealed = true }) {
   const canvasRef = useRef(null)
   const carouselRef = useRef(null)
 
@@ -86,8 +86,8 @@ export default function HeroCarousel({ sceneRevealed = true }) {
     idempotent, so a re-render that re-signals the reveal won't restart the decay.
   */
   useEffect(() => {
-    if (sceneRevealed) carouselRef.current?.startIntroSpin()
-  }, [sceneRevealed])
+    if (revealed) carouselRef.current?.startIntroSpin()
+  }, [revealed])
 
   return (
     <div className={styles.stage}>

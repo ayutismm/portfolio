@@ -11,25 +11,21 @@ import styles from './App.module.css'
 
 export default function App() {
   /*
-    Two gates, because the intro reveals the composition in two steps: the wheel
-    appears once the logo has morphed into the subject (`sceneRevealed`), and the
-    site chrome — header, title, taglines, cue — only at the hand-off
-    (`introDone`). Both start false so nothing shows behind the loader.
+    One gate: the intro holds everything — wheel and chrome — hidden until a
+    single reveal moment, when the backdrop lifts and the whole composition
+    (cards, title, taglines, cue) arrives together behind it. Starts false so
+    nothing shows behind the loader.
   */
-  const [sceneRevealed, setSceneRevealed] = useState(false)
-  const [introDone, setIntroDone] = useState(false)
+  const [revealed, setRevealed] = useState(false)
 
   useLenis()
   useClickBurst()
 
   return (
     <main className={styles.page}>
-      <IntroLoader
-        onSceneReveal={() => setSceneRevealed(true)}
-        onDone={() => setIntroDone(true)}
-      />
-      <Header introDone={introDone} />
-      <Hero sceneRevealed={sceneRevealed} introDone={introDone} />
+      <IntroLoader onReveal={() => setRevealed(true)} />
+      <Header revealed={revealed} />
+      <Hero revealed={revealed} />
       <CaseStack />
       <Footer />
     </main>
