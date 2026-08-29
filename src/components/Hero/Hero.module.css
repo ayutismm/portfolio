@@ -160,7 +160,7 @@
 .title {
   position: absolute;
   /* Positioned in the upper-middle, below the header with breathing room. */
-  top: clamp(4.5rem, 8vh, 7rem);
+  top: clamp(5.5rem, 11vh, 9rem);
   left: 50%;
   transform: translateX(-50%) translateY(0.15em);
   z-index: 3;
@@ -170,43 +170,84 @@
   font-family: var(--font-display);
   font-size: var(--fs-hero);
   font-weight: 400;
+  /* Outline weight for the drained (stroke-only) word; scales with the viewport
+     roughly like the vw-based font so the outline stays proportional. */
+  --hero-stroke-w: clamp(1.5px, 0.28vw, 3px);
   line-height: 0.84;
   text-transform: uppercase;
-  letter-spacing: var(--tracking-tight);
+  /* Anton is very tight by nature; open the tracking a touch so the display
+     type breathes. */
+  letter-spacing: 0.04em;
   color: var(--ink);
   white-space: nowrap;
   /* Keep the glyphs' translateZ in the scene. */
   transform-style: preserve-3d;
 }
 
-.titleInner {
-  display: flex;
+.heading {
+  display: inline-flex;
+  /* All-caps display type, so bottom-aligning reads as a shared baseline for
+     the fixed "I" and the cycling word. */
   align-items: flex-end;
-  /* Clip the char rise-in without hiding the arc's vertical offsets. */
+  /* Space between "I" and the cycling word (a bare space would collapse). */
+  column-gap: 0.26em;
+  /* Breathing room below the line, matching the old .titleInner footprint. */
   padding-bottom: 0.20em;
-  /* Flex container must also preserve 3D or the glyph depths collapse. */
-  transform-style: preserve-3d;
-}
-
-.titleChar {
-  display: inline-block;
-  /* The depth (translateZ) is appended after the arch transforms so the glyph
-     drops for the arc, then travels into the scene along the shared surface.
-     --dz is written by useArcSurface; the fallback keeps the first paint safe
-     before that hook runs. The glyphs stay upright — only the z-depth is
-     applied, not the surface-normal yaw that would turn them tangent to the
-     curve and read as a tilt. */
-  --dz: 0px;
-  transform: translateY(var(--dy)) translateZ(var(--dz));
-  transform-origin: center bottom;
-  /* Hidden until the intro hands off; the reveal fades these in as one group. */
+  /* Hidden until the intro hands off; the reveal fades the heading in as one. */
   opacity: 0;
-  will-change: transform;
+  will-change: transform, opacity;
 }
 
-/* Preserve the inter-word gap — a bare space in a flex row collapses. */
-.titleChar[data-space] {
-  width: 0.26em;
+/* The fixed lead — "I". Never cycles. */
+.lead {
+  display: inline-block;
+}
+
+/* Holds the cycling word layer. Its width is set/tweened by Hero.jsx to the
+   live word's width; because .title is width: max-content + translateX(-50%),
+   tweening this width re-centres the whole "I ___" unit on its own (and, since
+   the word rides a width-independent axis, moves only the "I"). */
+.wordSlot {
+  position: relative;
+  display: inline-block;
+  /* Matches the line box so the words share the "I"'s baseline. */
+  height: 0.84em;
+  /* Glyph outlines can bleed a touch past the box; don't clip them. */
+  overflow: visible;
+}
+
+/* The cycling word layer. Absolutely centred on the slot's centre (left: 50% +
+   GSAP xPercent: -50), which — because .title is width: max-content centred via
+   translateX(-50%) — is a word-width-independent axis: tweening the slot width
+   moves only the fixed "I", never these glyphs. */
+.word {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  white-space: nowrap;
+}
+
+/* One glyph of the cycling word: a stroked outline copy (.charStroke, in flow,
+   defining the glyph box) with a solid fill copy (.charFill) laid exactly over
+   it. Both are --ink, so a lit fill hides the outline beneath; GSAP flashes
+   their opacity per glyph (outline in, then fill; and the reverse to drain).
+   No clip-path — the reveal is a flash, not a wipe. */
+.char {
+  position: relative;
+  display: inline-block;
+}
+
+.charStroke {
+  display: inline-block;
+  color: transparent;
+  -webkit-text-stroke: var(--hero-stroke-w) var(--ink);
+}
+
+.charFill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: var(--ink);
 }
 
 /* ---- 4. character ---- */
@@ -214,8 +255,8 @@
 .character {
   position: absolute;
   left: 50%;
-  /* Anchored to the bottom so feet sit near the explore cue. */
-  bottom: clamp(1.5rem, 3vh, 3rem);
+  /* Anchored near the bottom; lifted a little so it reads higher in frame. */
+  bottom: clamp(3rem, 6vh, 5.5rem);
   transform: translateX(-50%);
   z-index: 4;
   /* Large enough to dominate vertically but leave room for the title above. */
@@ -238,7 +279,13 @@
   z-index: 3;
   display: flex;
   justify-content: space-between;
-  padding: 0 clamp(1.5rem, 8vw, 10rem);
+  /* Inset so the taglines flank the figure closely. The figure is centred at a
+     fixed pixel width, so its left edge sits at ~50vw minus half its width;
+     insetting by `50vw - 26rem` keeps each tagline a roughly constant gap from
+     that edge at every width (a plain vw padding would let the centred figure
+     overrun the taglines at ~1000px). Clamped so it never goes negative on
+     narrow screens nor drifts too far in on ultrawide. */
+  padding: 0 clamp(1.5rem, calc(50vw - 26rem), 32rem);
   font-family: var(--font-alt);
   /* Font size moves to the spans: they shrink by --arc-shrink to cancel the
      perspective magnification of their depth, keeping the net rendered size
@@ -298,10 +345,10 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.25rem;
   /* Bottom padding leaves room for the arrow's 4px bob without it clipping
      against the viewport edge. */
-  padding: 0.85rem 1.15rem 0.85rem;
+  padding: 0.5rem 1.15rem 0.45rem;
   background: var(--ink);
   color: var(--paper);
   border-radius: var(--radius-md) var(--radius-md) 0 0;
@@ -313,7 +360,6 @@
   pointer-events: auto;
   /* Hidden until the intro hands off; the reveal fades it in. */
   opacity: 0;
-  transition: transform var(--dur-med) var(--ease-out);
 }
 
 .cue:hover {
@@ -321,8 +367,8 @@
 }
 
 .cueArrow {
-  width: 9px;
-  height: 16px;
+  width: 8px;
+  height: 12px;
   background: currentColor;
   /* Down-arrow drawn as a clip-path so it inherits currentColor and needs no asset. */
   clip-path: polygon(40% 0, 60% 0, 60% 62%, 100% 62%, 50% 100%, 0 62%, 40% 62%);
@@ -451,5 +497,13 @@
   .title {
     top: clamp(4.5rem, 20vh, 8rem);
     font-size: clamp(2.4rem, 12vw, 3.75rem);
+  }
+
+  /* Phones: lift the figure higher. With the asides dropped there's empty
+     space low in the frame, so raising the subject keeps the composition from
+     going bottom-heavy. Keep this `bottom` in lockstep with .charWrap in
+     IntroLoader.module.css or the intro hand-off will jump. */
+  .character {
+    bottom: clamp(5rem, 12vh, 9rem);
   }
 }

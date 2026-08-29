@@ -43,12 +43,13 @@
 }
 
 /* Character copy for the morph. Positioned and sized exactly like the hero's
-   character (see Hero.module.css) so the hand-off crossfade lands pixel-perfect. */
+   character (see Hero.module.css) so the hand-off crossfade lands pixel-perfect.
+   Keep this `bottom` in lockstep with .character in Hero.module.css. */
 .charWrap {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: clamp(1.5rem, 3vh, 3rem);
+  bottom: clamp(3rem, 6vh, 5.5rem);
   z-index: 1;
   display: flex;
   justify-content: center;
@@ -67,5 +68,13 @@
 @media (max-width: 900px) {
   .character {
     height: clamp(280px, 56vh, 520px);
+  }
+}
+
+/* Phones: mirror the hero's raised figure (.character in Hero.module.css) so
+   the intro hand-off stays pixel-aligned at this width too. */
+@media (max-width: 560px) {
+  .charWrap {
+    bottom: clamp(5rem, 12vh, 9rem);
   }
 }

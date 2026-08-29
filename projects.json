@@ -1,0 +1,82 @@
+[
+  {
+    "number": "01",
+    "name": "Campus Companion",
+    "description": "A campus-focused React application packaged for Android using Capacitor, bringing essential student tools and campus resources into one mobile experience.",
+    "tech": [
+      "React",
+      "JavaScript",
+      "Capacitor",
+      "Android"
+    ],
+    "github": "",
+    "live": ""
+  },
+  {
+    "number": "02",
+    "name": "DHWANI",
+    "description": "Near-ultrasonic acoustic communication system for secure, air-gapped data transmission and authentication using CPFSK and real-time signal processing.",
+    "tech": [
+      "Python",
+      "NumPy",
+      "SciPy",
+      "SoundDevice",
+      "Matplotlib",
+      "AES-256-GCM",
+      "CPFSK"
+    ],
+    "github": "https://github.com/ayutismm/DHWANI",
+    "live": ""
+  },
+  {
+    "number": "03",
+    "name": "RESCUE-MESH",
+    "description": "Offline-first emergency communication network that relays SOS signals through BLE/WiFi Direct and syncs them to a responder dashboard when connectivity returns.",
+    "tech": [
+      "React",
+      "FastAPI",
+      "PostgreSQL",
+      "Kotlin",
+      "Android",
+      "BLE",
+      "WiFi Direct",
+      "Leaflet",
+      "Docker"
+    ],
+    "github": "https://github.com/neha23jk/RESCUE-MESH",
+    "live": ""
+  },
+  {
+    "number": "04",
+    "name": "GitRate",
+    "description": "AI-powered developer evaluation platform that combines GitHub metrics with qualitative AI analysis to generate fair, multi-dimensional developer ratings.",
+    "tech": [
+      "React",
+      "Vite",
+      "Tailwind CSS",
+      "FastAPI",
+      "Python",
+      "OpenRouter",
+      "Gemini"
+    ],
+    "github": "https://github.com/ayutismm/gitrate",
+    "live": ""
+  },
+  {
+    "number": "05",
+    "name": "Delhi AQI Command",
+    "description": "Real-time ward-wise air quality dashboard combining live pollution data, interactive maps, scientific AQI interpolation, and AI-powered pollution analysis.",
+    "tech": [
+      "React",
+      "Vite",
+      "Tailwind CSS",
+      "FastAPI",
+      "Python",
+      "Leaflet",
+      "Recharts",
+      "SciPy"
+    ],
+    "github": "https://github.com/ayutismm/hackathon-prototype-HACK4DELHI-",
+    "live": ""
+  }
+]

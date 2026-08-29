@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import styles from './CaseStack.module.css'
 
 /*
@@ -7,43 +7,16 @@ import styles from './CaseStack.module.css'
   Cards are sticky and share `top: 0`, so each slides up and covers the previous
   one — the stacked-deck effect from the reference.
 
-  Both animations deliberately avoid ScrollTrigger's start/end position maths:
-  it derives scroll offsets from the trigger's layout position, which is
-  unreliable for `position: sticky` elements (their rect stops moving once
-  stuck), and that silently left every card pinned at opacity 0.
+  coverage — reads the *next* section's live rect each frame. Once this section
+             is stuck its own rect is constant, so the only honest measure of
+             "how covered am I" is where the next card has got to. This drives
+             the subtle scale-back as the next card climbs over this one.
 
-    entrance — IntersectionObserver flips a class; CSS does the staggered reveal.
-    coverage — reads the *next* section's live rect each frame. Once this section
-               is stuck its own rect is constant, so the only honest measure of
-               "how covered am I" is where the next card has got to.
+  (There is deliberately no entrance fade/slide: the content is painted at rest.)
 */
 export default function CaseCard({ project, index, isLast }) {
   const sectionRef = useRef(null)
   const frameRef = useRef(null)
-  const [revealed, setRevealed] = useState(false)
-
-  useEffect(() => {
-    const el = sectionRef.current
-    if (!el) return
-
-    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    if (prefersReduced) {
-      setRevealed(true)
-      return
-    }
-
-    const io = new IntersectionObserver(
-      (entries) => {
-        if (entries.some((e) => e.isIntersecting)) {
-          setRevealed(true)
-          io.disconnect() // one-shot: cards don't un-reveal on the way back up
-        }
-      },
-      { threshold: 0.2 },
-    )
-    io.observe(el)
-    return () => io.disconnect()
-  }, [])
 
   useEffect(() => {
     if (isLast) return
@@ -79,6 +52,15 @@ export default function CaseCard({ project, index, isLast }) {
     }
   }, [isLast])
 
+  // Title styling: first word tinted with the case ink, remainder in black.
+  // Single-word names (DHWANI, GitRate…) have no remainder and tint fully.
+  const [lead, ...restWords] = project.name.split(' ')
+  const rest = restWords.join(' ')
+
+  // Device frame: 'phone' (portrait) for the Android app, 'laptop' (landscape)
+  // for the web apps.
+  const isPhone = project.type === 'phone'
+
   return (
     <section
       ref={sectionRef}
@@ -87,27 +69,17 @@ export default function CaseCard({ project, index, isLast }) {
       // z-index climbs so later cards paint over earlier ones.
       style={{ zIndex: 5 + index, '--case-ink': project.ink }}
     >
-      <div
-        className={`${styles.frame} ${revealed ? styles.revealed : ''}`}
-        ref={frameRef}
-      >
+      <div className={styles.frame} ref={frameRef}>
         <span className={styles.number} aria-hidden="true">
           {project.number}
         </span>
 
         <div className={styles.cover}>
           <div className={styles.content}>
-            <span className={styles.crest} aria-hidden="true" />
-
             <h2 className={styles.title}>
-              {project.titleLines.map((line, i) => (
-                <span className={styles.titleLine} key={i}>
-                  {line.italic ? <em className={styles.titleItalic}>{line.text}</em> : line.text}
-                </span>
-              ))}
+              <span className={styles.titleLead}>{lead}</span>
+              {rest ? ` ${rest}` : ''}
             </h2>
-
-            <p className={styles.blurb}>{project.blurb}</p>
 
             <div className={styles.tags}>
               {project.tags.map((tag) => (
@@ -123,11 +95,8 @@ export default function CaseCard({ project, index, isLast }) {
             </button>
           </div>
 
-          <div className={styles.mock}>
-            <img
-              src={project.cover}
-              alt={`${project.titleLines.map((l) => l.text).join(' ')} preview`}
-            />
+          <div className={`${styles.mock} ${isPhone ? styles.mockPhone : styles.mockLaptop}`}>
+            <img src={project.cover} alt={`${project.name} preview`} />
           </div>
         </div>
       </div>

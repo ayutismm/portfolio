@@ -18,6 +18,11 @@ gsap.registerPlugin(ScrollTrigger)
 */
 export function useLenis() {
   useEffect(() => {
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual'
+    }
+    window.scrollTo(0, 0)
+
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     // Touch scrolling is left native (syncTouch is off, the OS applies its own
     // inertia), so on coarse-pointer devices Lenis would only run a useless RAF
@@ -36,6 +41,8 @@ export function useLenis() {
       // inertia there, and doubling it feels laggy.
       touchMultiplier: 1.6,
     })
+
+    lenis.scrollTo(0, { immediate: true })
 
     lenis.on('scroll', ScrollTrigger.update)
 

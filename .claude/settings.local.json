@@ -43,7 +43,10 @@
       "Bash(echo \"exit=$?\")",
       "Bash(xxd)",
       "Bash(node \"C:/Users/smash/.claude/skills/browser-automation/browser.mjs\" http://localhost:5173/ --script ./scripts/qa-intro.mjs --timeout 60000)",
-      "Read(//tmp/**)"
+      "Read(//tmp/**)",
+      "Bash(kill %1)",
+      "Bash(rm -f /tmp/hero-mobile.png \"D:/portfolio-website-mine/qa-align.mjs\")",
+      "Bash(pkill -f \"vite\")"
     ]
   }
 }

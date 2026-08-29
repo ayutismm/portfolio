@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="390" height="844" viewBox="0 0 390 844" fill="none" role="img" aria-label="Campus Companion screenshot placeholder">
+  <rect width="390" height="844" fill="#f4f4f4"/>
+  <rect x="150" y="16" width="90" height="18" rx="9" fill="#d3d2d2"/>
+  <rect x="20" y="56" width="350" height="150" rx="20" fill="#dd3b86"/>
+  <text x="44" y="118" font-family="Poppins, Montserrat, sans-serif" font-size="14" font-weight="600" letter-spacing="3" fill="#ffffff" fill-opacity="0.85">CASE STUDY</text>
+  <text x="44" y="158" font-family="Montserrat, sans-serif" font-size="26" font-weight="600" fill="#ffffff">Campus Companion</text>
+  <rect x="20" y="240" width="350" height="96" rx="16" fill="#e6e6e6"/>
+  <rect x="20" y="352" width="350" height="96" rx="16" fill="#e6e6e6"/>
+  <rect x="20" y="464" width="168" height="120" rx="16" fill="#e6e6e6"/>
+  <rect x="202" y="464" width="168" height="120" rx="16" fill="#e6e6e6"/>
+  <text x="195" y="700" text-anchor="middle" font-family="Montserrat, sans-serif" font-size="15" font-weight="600" fill="#a8a8a8">Screenshot placeholder</text>
+  <text x="195" y="724" text-anchor="middle" font-family="Montserrat, sans-serif" font-size="12" fill="#c0c0c0">Drop your image in /projects/cases/</text>
+  <rect x="115" y="770" width="160" height="44" rx="22" fill="#dd3b86" fill-opacity="0.15"/>
+</svg>

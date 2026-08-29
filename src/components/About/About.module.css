@@ -1,0 +1,567 @@
+/* ============================================================
+   ABOUT SECTION & BENTO GRID
+   ============================================================ */
+
+.aboutSection {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  min-height: 100vh;
+  background: var(--paper);
+  color: var(--ink);
+  padding: calc(var(--header-height) + clamp(2rem, 4vw, 4rem)) var(--gutter) clamp(4rem, 8vw, 8rem);
+  isolation: isolate;
+}
+
+.container {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(2rem, 4vw, 3.5rem);
+}
+
+/* Header block */
+.headerBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.subTag {
+  font-family: var(--font-alt);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wider);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.subTag::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background: var(--accent);
+  border-radius: 50%;
+}
+
+.mainHeading {
+  font-family: var(--font-display);
+  font-size: clamp(2.5rem, 6vw, 4.5rem);
+  line-height: 0.9;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-tight);
+  color: var(--ink);
+}
+
+.tagline {
+  font-family: var(--font-alt);
+  font-size: var(--fs-md);
+  color: var(--grey-600);
+  font-weight: 500;
+  max-width: 680px;
+  line-height: 1.4;
+}
+
+/* Bento Grid System */
+.bentoGrid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: clamp(1rem, 1.8vw, 1.5rem);
+  width: 100%;
+}
+
+/* Base Bento Card */
+.bentoCard {
+  position: relative;
+  background: var(--grey-100);
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-lg);
+  padding: clamp(1.25rem, 2.5vw, 2rem);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+  transition: transform var(--dur-med) var(--ease-out),
+              box-shadow var(--dur-med) var(--ease-out),
+              border-color var(--dur-med) var(--ease-out);
+}
+
+.bentoCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.08);
+  border-color: rgba(0, 0, 0, 0.35);
+}
+
+/* 1. Lanyard Card Tile (Spans 6 cols, 2 rows) */
+.cardLanyard {
+  grid-column: span 6;
+  grid-row: span 2;
+  min-height: 540px;
+  background: linear-gradient(145deg, #0d0d11 0%, #171720 100%);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.12);
+  padding: 0;
+}
+
+.lanyardCanvasWrapper {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.lanyardHeader {
+  position: absolute;
+  top: 1.25rem;
+  left: 1.25rem;
+  right: 1.25rem;
+  z-index: 2;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  pointer-events: none;
+}
+
+.passBadge {
+  font-family: var(--font-alt);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 0.4rem 0.8rem;
+  border-radius: var(--radius-sm);
+  color: #ffffff;
+}
+
+.statusPulse {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-alt);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+  padding: 0.35rem 0.75rem;
+  border-radius: 20px;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.pulseDot {
+  width: 6px;
+  height: 6px;
+  background: #10b981;
+  border-radius: 50%;
+  box-shadow: 0 0 8px #10b981;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+.lanyardFooter {
+  position: absolute;
+  bottom: 1.25rem;
+  left: 1.25rem;
+  right: 1.25rem;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.dragHint {
+  font-family: var(--font-alt);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 0.5rem 1.1rem;
+  border-radius: 30px;
+  color: rgba(255, 255, 255, 0.9);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* 2. Core Bio Card (Spans 6 cols, 1 row) */
+.cardBio {
+  grid-column: span 6;
+  background: var(--ink);
+  color: var(--paper);
+  min-height: 250px;
+}
+
+.bioTag {
+  font-family: var(--font-alt);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 0.5rem;
+}
+
+.bioHeading {
+  font-family: var(--font-sans);
+  font-size: clamp(1.15rem, 2vw, 1.45rem);
+  font-weight: 700;
+  line-height: 1.3;
+  margin-bottom: 0.75rem;
+}
+
+.bioText {
+  font-family: var(--font-sans);
+  font-size: var(--fs-base);
+  color: rgba(255, 255, 255, 0.75);
+  line-height: 1.5;
+}
+
+.skillPills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1.25rem;
+}
+
+.pill {
+  font-family: var(--font-alt);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 0.3rem 0.7rem;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+/* 3. Photo Spotlight Card (Spans 4 cols, 1 row) */
+.cardPhoto {
+  grid-column: span 4;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: linear-gradient(180deg, #f8f8f8 0%, #ececec 100%);
+  position: relative;
+}
+
+.photoFrame {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+  border: 3px solid #ffffff;
+  margin-bottom: 1rem;
+}
+
+.photoImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.photoMeta {
+  text-align: center;
+}
+
+.photoName {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  letter-spacing: 0.02em;
+  color: var(--ink);
+}
+
+.photoRole {
+  font-family: var(--font-alt);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--grey-600);
+}
+
+/* 4. Location & Time Card (Spans 4 cols, 1 row) */
+.cardLocation {
+  grid-column: span 4;
+  background: var(--paper);
+}
+
+.locationTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.locationLabel {
+  font-family: var(--font-alt);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+  color: var(--grey-600);
+}
+
+.clockValue {
+  font-family: var(--font-display);
+  font-size: 2.2rem;
+  letter-spacing: 0.05em;
+  color: var(--ink);
+  line-height: 1;
+  margin: 0.75rem 0 0.25rem;
+}
+
+.tzLabel {
+  font-family: var(--font-alt);
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--grey-600);
+}
+
+.locationCoords {
+  font-family: var(--font-alt);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--divider);
+}
+
+/* 5. Tech Stack Matrix Card (Spans 4 cols, 1 row) */
+.cardTech {
+  grid-column: span 4;
+  background: var(--paper);
+}
+
+.techTitle {
+  font-family: var(--font-alt);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+  color: var(--grey-600);
+  margin-bottom: 0.75rem;
+}
+
+.techGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.techCategory {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.catName {
+  font-family: var(--font-alt);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.catPills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.techChip {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: var(--grey-100);
+  border: 1px solid var(--divider);
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+}
+
+/* 6. Stats Tile (Spans 6 cols, 1 row) */
+.cardStats {
+  grid-column: span 6;
+  background: var(--paper);
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  height: 100%;
+  align-items: center;
+}
+
+.statItem {
+  display: flex;
+  flex-direction: column;
+}
+
+.statNum {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 3.2vw, 2.8rem);
+  line-height: 1;
+  color: var(--ink);
+}
+
+.statLabel {
+  font-family: var(--font-alt);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--grey-600);
+  margin-top: 0.35rem;
+}
+
+/* 7. Contact Tile (Spans 6 cols, 1 row) */
+.cardContact {
+  grid-column: span 6;
+  background: linear-gradient(135deg, #111111 0%, #1f1f1f 100%);
+  color: var(--paper);
+  border-color: rgba(255, 255, 255, 0.15);
+  justify-content: space-between;
+}
+
+.contactTitle {
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 2.6vw, 2.2rem);
+  text-transform: uppercase;
+  line-height: 1;
+  margin-bottom: 0.5rem;
+}
+
+.contactDesc {
+  font-family: var(--font-alt);
+  font-size: var(--fs-sm);
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 1.25rem;
+}
+
+.contactActions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.emailBtn {
+  font-family: var(--font-alt);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  background: var(--paper);
+  color: var(--ink);
+  padding: 0.75rem 1.4rem;
+  border-radius: var(--radius-md);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: background var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+}
+
+.emailBtn:hover {
+  background: var(--accent);
+  color: #ffffff;
+  transform: translateY(-2px);
+}
+
+.socialsRow {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.socialLink {
+  width: 42px;
+  height: 42px;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out);
+}
+
+.socialLink:hover {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: #ffffff;
+}
+
+.socialIcon {
+  width: 20px;
+  height: 20px;
+  filter: invert(1);
+}
+
+/* Responsive Breakpoints */
+@media (max-width: 1024px) {
+  .cardLanyard {
+    grid-column: span 12;
+    grid-row: span 1;
+    min-height: 480px;
+  }
+
+  .cardBio {
+    grid-column: span 12;
+  }
+
+  .cardPhoto,
+  .cardLocation,
+  .cardTech {
+    grid-column: span 4;
+  }
+
+  .cardStats,
+  .cardContact {
+    grid-column: span 6;
+  }
+}
+
+@media (max-width: 768px) {
+  .bentoGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .cardLanyard,
+  .cardBio,
+  .cardPhoto,
+  .cardLocation,
+  .cardTech,
+  .cardStats,
+  .cardContact {
+    grid-column: span 1;
+  }
+
+  .cardLanyard {
+    min-height: 420px;
+  }
+
+  .statsGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.25rem;
+  }
+}

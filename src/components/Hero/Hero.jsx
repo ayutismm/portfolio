@@ -8,53 +8,19 @@ import HeroMarquee from './HeroMarquee'
 import styles from './Hero.module.css'
 
 /*
-  The display title is a 2D arch plus a per-glyph 3D depth. The arch — a
-  quadratic vertical nudge — is index-based and lives here; it reads as the
-  reference's kinetic distortion while staying plain DOM text (selectable,
-  accessible, and far easier to retitle than baked WebGL type).
-
-  The 3D depth (translateZ) is NOT computed here: it comes from the shared arc
-  surface in utils/arc-surface.js, measured and written per glyph by
-  useArcSurface. That is what puts the title, the taglines and the WebGL card
-  row on one curved surface instead of three look-alikes. Only the z-depth is
-  applied to the glyphs — the tangent yaw is left off so the letters stay
-  upright.
+  The hero heading is a fixed lead word ("I") followed by a word that cycles
+  through profile.heroWords with a 3D kinetic fold. The cycling is driven by
+  GSAP in an effect below; the markup is just the lead plus a slot holding two
+  stacked word layers that hand off (one folds out as the next folds in).
 */
-const ARC_DEPTH = 0.18 // convex arch depth
-
-function ArcedTitle({ text }) {
-  const chars = [...text]
-  const last = Math.max(1, chars.length - 1)
-
-  return (
-    <span className={styles.titleInner}>
-      {chars.map((ch, i) => {
-        const c = (i / last) * 2 - 1 // -1 → +1 across the line
-        // Convex arch (∩): center is high (dy≈0), edges drop down (positive dy)
-        const dy = c * c * ARC_DEPTH
-        const isSpace = ch === ' '
-        return (
-          <span
-            key={`${ch}-${i}`}
-            className={styles.titleChar}
-            data-space={isSpace ? '' : undefined}
-            style={{
-              '--dy': `${dy}em`,
-              // --dz is written by useArcSurface from the shared arc.
-            }}
-          >
-            {ch === ' ' ? ' ' : ch}
-          </span>
-        )
-      })}
-    </span>
-  )
-}
 
 export default function Hero({ revealed = true }) {
   const heroRef = useRef(null)
   const stageRef = useRef(null)
   const titleRef = useRef(null)
+  const headingRef = useRef(null)
+  const slotRef = useRef(null)
+  const wordRef = useRef(null)
   const asideRef = useRef(null)
   const asideLeftRef = useRef(null)
   const asideRightRef = useRef(null)
@@ -75,11 +41,13 @@ export default function Hero({ revealed = true }) {
   // Drives --hero-cursor-x/y and the shared tilt amplitude on the section.
   useHeroParallax(heroRef)
 
-  // Measures the title glyphs and taglines onto the arc surface (--dz/--rotY).
+  // Measures the taglines onto the arc surface (--dz/--rotY) and writes the
+  // shared --hero-slide-x/y. The heading words are flat by design (clean-block
+  // kinetic type), so no glyph selector is passed — only the taglines and the
+  // WebGL card row ride the arc.
   useArcSurface(heroRef, {
     titleRef,
     asideRef,
-    glyphSelector: `.${styles.titleChar}`,
     asideLeftSelector: `.${styles.asideLeft}`,
     asideRightSelector: `.${styles.asideRight}`,
   })
@@ -88,7 +56,7 @@ export default function Hero({ revealed = true }) {
     if (!revealed) return
 
     const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    const chars = titleRef.current?.querySelectorAll(`.${styles.titleChar}`)
+    const heading = headingRef.current
     const stage = stageRef.current
 
     // Reduced motion: just reveal everything, no movement.
@@ -98,7 +66,7 @@ export default function Hero({ revealed = true }) {
         { opacity: 1 },
       )
       if (stage) gsap.set(stage, { opacity: 1 })
-      if (chars) gsap.set(chars, { opacity: 1 })
+      if (heading) gsap.set(heading, { opacity: 1 })
       return
     }
 
@@ -123,39 +91,178 @@ export default function Hero({ revealed = true }) {
       )
     }
 
-    // Title chars scale + fade in from the centre outward with stagger.
-    if (chars?.length) {
-      const mid = (chars.length - 1) / 2
+    // The heading reveals as one unit (a subtle rise + settle); the individual
+    // words are then handed to the cycling effect below.
+    if (heading) {
       tl.fromTo(
-        chars,
-        { opacity: 0, scale: 0.5 },
-        {
-          opacity: 1,
-          scale: 1,
-          duration: 0.6,
-          ease: 'power2.out',
-          stagger: { each: 0.025, from: Math.round(mid) },
-        },
+        heading,
+        { opacity: 0, scale: 0.92, y: '0.12em' },
+        { opacity: 1, scale: 1, y: 0, duration: 0.7, ease: 'power2.out' },
         0,
       )
     }
 
-    // Taglines arrive a beat behind. The cue waits until the loader's root
-    // opacity tween has finished AND the loader DOM has unmounted, so it
-    // never paints in front of the loader's character copy during the
-    // crossfade. The intro timeline (IntroLoader.jsx) fires onReveal at the
-    // start of the morph; the root opacity tween then runs from revealed +
-    // 2.25s to revealed + 2.85s, with setHidden(true) unmounting the loader
-    // DOM on the last frame. We start the cue at revealed + 3.0s (0.15s
-    // buffer past unmount) and it finishes fading in at revealed + 3.5s.
+    // Taglines and explore cue arrive together shortly after the main heading and character.
     tl.to(
-      [asideLeftRef.current, asideRightRef.current],
+      [asideLeftRef.current, asideRightRef.current, cueRef.current],
       { opacity: 1, duration: 0.5, ease: 'power2.out' },
       0.15,
     )
-      .to(cueRef.current, { opacity: 1, duration: 0.5, ease: 'power2.out' }, 3.0)
 
     return () => tl.kill()
+  }, [revealed])
+
+  /*
+    Cycle the second word with a per-glyph outline→fill flash. The fixed "I"
+    stays put; only the word swaps.
+
+    Reveal sweeps from the END of the word to the FRONT (right → left): each
+    glyph's stroked outline flashes in, then one step later its solid fill
+    flashes in on top — so glyph k's fill lands together with glyph k+1's
+    outline — leaving the word solid. Un-reveal is the mirror, sweeping FRONT →
+    END: each glyph's fill flashes out (back to outline), then its outline
+    flashes out (glyph gone). Everything is an opacity flash — no wipe/slide.
+
+    Re-centring rides the reveal: the word sits on a width-independent centre
+    axis (the slot is centred via left:50% inside .title's translateX(-50%)
+    unit — see the CSS), so tweening the slot width to the incoming word moves
+    ONLY the fixed "I". We run that tween across the reveal cascade, so the "I"
+    glides into place in step with the arriving glyphs while the glyphs
+    themselves flash onto a rock-steady axis.
+
+    Each word's glyphs are built in the DOM here (buildWord): every glyph is a
+    stroked outline copy (.charStroke, in flow, defining the box) with a solid
+    fill copy (.charFill) laid exactly over it. Both carry --ink, so a lit fill
+    hides the outline beneath it; drain the fill and the outline is what remains.
+  */
+  useEffect(() => {
+    if (!revealed) return
+
+    const words = profile.heroWords
+    const slot = slotRef.current
+    const layer = wordRef.current
+    if (!words?.length || !slot || !layer) return
+
+    const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const widthOf = (el) => `${el.offsetWidth}px` // offsetWidth ignores transforms
+
+    // Build per-glyph markup for `text` into the layer and return the glyph
+    // handles [{ stroke, fill }]. `solid` seeds the opacities for the
+    // reduced-motion path (glyph fully shown, no flash); otherwise glyphs start
+    // hidden, ready for the reveal cascade to flash them in.
+    const buildWord = (text, solid) => {
+      layer.replaceChildren()
+      const glyphs = []
+      for (const ch of text) {
+        const charEl = document.createElement('span')
+        charEl.className = styles.char
+        const stroke = document.createElement('span')
+        stroke.className = styles.charStroke
+        stroke.textContent = ch
+        const fill = document.createElement('span')
+        fill.className = styles.charFill
+        fill.textContent = ch
+        charEl.append(stroke, fill)
+        layer.append(charEl)
+        glyphs.push({ stroke, fill })
+      }
+      gsap.set(
+        glyphs.flatMap((g) => [g.stroke, g.fill]),
+        { opacity: solid ? 1 : 0 },
+      )
+      return glyphs
+    }
+
+    gsap.set(layer, { xPercent: -50 })
+
+    // Reduced motion: no cascade — swap the solid word on an interval.
+    if (calm) {
+      let i = 0
+      buildWord(words[0], true)
+      slot.style.width = widthOf(layer)
+      const id = window.setInterval(() => {
+        i = (i + 1) % words.length
+        buildWord(words[i], true)
+        slot.style.width = widthOf(layer)
+      }, 2600)
+      return () => window.clearInterval(id)
+    }
+
+    const STEP = 0.09 // stagger between consecutive glyphs
+    const FLASH = 0.13 // opacity flash per glyph (outline or fill)
+    const HOLD = 1.6 // seconds the solid word rests before it drains
+    const INTRO_DELAY = 0.85 // let the heading fade in before the first cascade
+
+    let index = 0
+    let glyphs = buildWord(words[0], false)
+    // The first word grows from nothing: the "I" glides out from centre as the
+    // word assembles, the same re-centre every later swap performs.
+    slot.style.width = '0px'
+
+    let call = null
+    let tl = null
+
+    // Reveal (END → FRONT): outline flashes, then fill one step behind. The
+    // slot width tweens to the incoming word across the cascade, gliding the
+    // "I" into place as the glyphs arrive (only the "I" moves — see above).
+    const cascadeIn = (g, targetW) => {
+      const t = gsap.timeline()
+      const n = g.length
+      const widthDur = Math.max((n - 1) * STEP + FLASH, FLASH)
+      t.to(slot, { width: targetW, duration: widthDur, ease: 'power2.out' }, 0)
+      for (let k = 0; k < n; k++) {
+        const idx = n - 1 - k
+        const at = k * STEP
+        t.to(g[idx].stroke, { opacity: 1, duration: FLASH, ease: 'power1.out' }, at)
+        t.to(g[idx].fill, { opacity: 1, duration: FLASH, ease: 'power1.out' }, at + STEP)
+      }
+      return t
+    }
+
+    // Un-reveal (FRONT → END): the mirror — fill flashes out, then outline one
+    // step behind, until the word is gone. Width holds (re-centring belongs to
+    // the reveal), so the "I" stays put while the current word drains away.
+    const cascadeOut = (g) => {
+      const t = gsap.timeline()
+      const n = g.length
+      for (let k = 0; k < n; k++) {
+        const at = k * STEP
+        t.to(g[k].fill, { opacity: 0, duration: FLASH, ease: 'power1.in' }, at)
+        t.to(g[k].stroke, { opacity: 0, duration: FLASH, ease: 'power1.in' }, at + STEP)
+      }
+      return t
+    }
+
+    const holdThenCycle = () => {
+      call = gsap.delayedCall(HOLD, () => {
+        tl = cascadeOut(glyphs)
+        tl.eventCallback('onComplete', () => {
+          index = (index + 1) % words.length
+          glyphs = buildWord(words[index], false)
+          tl = cascadeIn(glyphs, widthOf(layer))
+          tl.eventCallback('onComplete', holdThenCycle)
+        })
+      })
+    }
+
+    // First word: let the heading fade in, then flash-cascade it in.
+    call = gsap.delayedCall(INTRO_DELAY, () => {
+      tl = cascadeIn(glyphs, widthOf(layer))
+      tl.eventCallback('onComplete', holdThenCycle)
+    })
+
+    // Keep the unit centred after viewport changes (the font is vw-based, so
+    // the live word's pixel width shifts with the viewport).
+    const onResize = () => {
+      slot.style.width = widthOf(layer)
+    }
+    window.addEventListener('resize', onResize)
+
+    return () => {
+      if (call) call.kill()
+      if (tl) tl.kill()
+      window.removeEventListener('resize', onResize)
+    }
   }, [revealed])
 
   /*
@@ -194,10 +301,8 @@ export default function Hero({ revealed = true }) {
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     if (prefersReduced) return
 
-    const stack = document.getElementById('selected-work')
-    if (!stack) return
-
-    const RISE_PX = 80
+    const nextSection = hero.nextElementSibling || document.getElementById('selected-work')
+    if (!nextSection) return
 
     const cue = cueRef.current
     if (!cue) return
@@ -210,16 +315,21 @@ export default function Hero({ revealed = true }) {
       raf = 0
       // Before the reveal tween fires, the cue is held at opacity 0 by its
       // own CSS. Don't touch it — the scroll effect is here only to hand
-      // the cue off to the case stack once it's already on screen.
+      // the cue off to the next section once it's already on screen.
       if (!revealedRef.current) return
 
       const vh = window.innerHeight
-      // p = 0 when the stack's top is at the hero's bottom (vh), p = 1 when
-      // the stack's top has reached the viewport top (0).
-      const stackTop = stack.getBoundingClientRect().top
-      const p = Math.max(0, Math.min(1, (vh - stackTop) / vh))
-      const opacity = (1 - p).toFixed(3)
-      const rise = (p * RISE_PX).toFixed(1)
+      // p = 0 when the rising section's top is at the hero's bottom (vh), p = 1 when
+      // it reaches the viewport top (0).
+      const sectionTop = nextSection.getBoundingClientRect().top
+      const p = Math.max(0, Math.min(1, (vh - sectionTop) / vh))
+
+      // Fade out completely by the time the next section reaches mid-viewport (p = 0.5).
+      const fadeProgress = Math.min(1, p / 0.5)
+      const opacity = (1 - fadeProgress).toFixed(3)
+
+      // Translate up 1:1 with the top edge of the rising section so the cue's bottom edge stays locked to it.
+      const rise = (p * vh).toFixed(1)
       if (opacity !== lastOpacity) {
         lastOpacity = opacity
         // Write opacity directly (the same property the reveal tween wrote
@@ -251,7 +361,7 @@ export default function Hero({ revealed = true }) {
   return (
     <>
       <section className={styles.hero} ref={heroRef} aria-label="Product design work">
-        {/* Real heading for assistive tech and SEO; the arced version is decorative. */}
+        {/* Real heading for assistive tech and SEO; the kinetic version is decorative. */}
         <h1 className="sr-only">
           {profile.name} — {profile.role}
         </h1>
@@ -269,7 +379,17 @@ export default function Hero({ revealed = true }) {
         <div className={styles.overlay}>
           <div className={styles.layerScene}>
             <p className={styles.title} ref={titleRef} aria-hidden="true">
-              <ArcedTitle text={profile.heroTitle} />
+              <span className={styles.heading} ref={headingRef}>
+                <span className={styles.lead}>{profile.heroLead}</span>
+                <span className={styles.wordSlot} ref={slotRef}>
+                  {/*
+                    The cycling word is built here in JS (see the effect above):
+                    one glyph per letter, each a stroked outline copy with a
+                    solid fill laid over it, flashed in/out per glyph.
+                  */}
+                  <span className={styles.word} ref={wordRef} />
+                </span>
+              </span>
             </p>
 
             <div className={styles.aside} ref={asideRef} aria-hidden="true">

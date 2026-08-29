@@ -62,7 +62,7 @@ export function useArcSurface(heroRef, { titleRef, asideRef, glyphSelector, asid
       hero.style.setProperty('--hero-slide-y', `${slideY.toFixed(2)}px`)
 
       // ---- title glyphs: ride outward, no correction ----
-      const glyphs = titleRef.current?.querySelectorAll(glyphSelector)
+      const glyphs = glyphSelector ? titleRef.current?.querySelectorAll(glyphSelector) : null
       if (glyphs?.length) {
         const parent = glyphs[0].offsetParent ?? glyphs[0].parentElement
         const centre = (parent?.offsetWidth ?? 0) / 2
@@ -126,7 +126,7 @@ export function useArcSurface(heroRef, { titleRef, asideRef, glyphSelector, asid
     const ro = new ResizeObserver(schedule)
     ro.observe(hero)
     // The display face (Anton) sets glyph widths; re-measure once it is live.
-    document.fonts?.ready?.then(schedule).catch(() => {})
+    document.fonts?.ready?.then(schedule).catch(() => { })
 
     return () => {
       cancelAnimationFrame(raf)

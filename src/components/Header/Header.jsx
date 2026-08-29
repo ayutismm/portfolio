@@ -7,8 +7,8 @@ import styles from './Header.module.css'
 
 const TABS = ['Design', 'About']
 
-export default function Header({ revealed = true }) {
-  const [activeTab, setActiveTab] = useState(0)
+export default function Header({ revealed = true, currentPage = 'design', onNavigate }) {
+  const activeTab = currentPage === 'about' ? 1 : 0
   const [copied, setCopied] = useState(false)
   const [panelOpen, setPanelOpen] = useState(false)
   const [indicator, setIndicator] = useState({ left: 0, width: 0 })
@@ -16,9 +16,7 @@ export default function Header({ revealed = true }) {
   const scrolled = useScrolled(40)
   const atFooter = useAtFooter(60)
 
-  // Position the sliding pill behind the active tab. Measured from the DOM
-  // (rather than hard-coded widths) so it stays correct when the font loads or
-  // labels change length.
+  // Position the sliding pill behind the active tab.
   useEffect(() => {
     const move = () => {
       const el = tabRefs.current[activeTab]
@@ -26,7 +24,6 @@ export default function Header({ revealed = true }) {
       setIndicator({ left: el.offsetLeft, width: el.offsetWidth })
     }
     move()
-    // Re-measure once webfonts settle, otherwise the pill is sized to fallback metrics.
     document.fonts?.ready.then(move)
     window.addEventListener('resize', move)
     return () => window.removeEventListener('resize', move)
@@ -38,8 +35,13 @@ export default function Header({ revealed = true }) {
       setCopied(true)
       setTimeout(() => setCopied(false), 1600)
     } catch {
-      // Clipboard can be blocked (insecure context / permissions) — fail quietly
-      // rather than throwing an unhandled rejection.
+      // Insecure context fallback
+    }
+  }
+
+  const handleTabClick = (i) => {
+    if (onNavigate) {
+      onNavigate(i === 1 ? 'about' : 'design')
     }
   }
 
@@ -55,7 +57,7 @@ export default function Header({ revealed = true }) {
         aria-label="Main navigation"
       >
         <div className={styles.brand}>
-          <span className={styles.logoLink} data-click-burst>
+          <span className={styles.logoLink} data-click-burst onClick={() => onNavigate && onNavigate('design')}>
             <Logo className={styles.logo} />
           </span>
           <span className={styles.location} data-click-burst>
@@ -77,7 +79,7 @@ export default function Header({ revealed = true }) {
               type="button"
               className={i === activeTab ? styles.tabActive : styles.tab}
               aria-current={i === activeTab ? 'page' : undefined}
-              onClick={() => setActiveTab(i)}
+              onClick={() => handleTabClick(i)}
               data-click-burst
             >
               {tab}

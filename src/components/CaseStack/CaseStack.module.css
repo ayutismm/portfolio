@@ -32,17 +32,17 @@
   display: grid;
   border: 1px solid var(--divider);
   border-radius: var(--radius-lg);
-  background: var(--grey-100);
+  background: var(--paper);
   overflow: hidden;
   transform-origin: center top;
 
   /* --cover is written per-frame by CaseCard: 0 = fully exposed, 1 = the next
-     card completely overlaps this one. Driving scale/opacity from one variable
-     keeps the whole effect on the compositor. */
+     card completely overlaps this one. It drives only the subtle scale-back —
+     no opacity fade: each card is opaque, so the next card itself does the
+     covering as it climbs. */
   --cover: 0;
   transform: scale(calc(1 - 0.07 * var(--cover)));
-  opacity: calc(1 - 0.5 * var(--cover));
-  will-change: transform, opacity;
+  will-change: transform;
 }
 
 .number {
@@ -73,104 +73,57 @@
 .content {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 1.15rem;
+  align-items: center;
+  justify-self: center;
+  text-align: center;
+  gap: 1.5rem;
   max-width: 34rem;
 }
 
-/*
-  Staggered entrance. Children start lowered + transparent and settle when
-  CaseCard adds .revealed. Delays are per-position rather than per-element so
-  adding a field to the card needs no JS change.
-*/
-.content > *,
-.mock {
-  opacity: 0;
-  transform: translateY(38px);
-  transition:
-    opacity 0.75s var(--ease-out),
-    transform 0.75s var(--ease-out);
-}
-
-.revealed .content > *,
-.revealed .mock {
-  opacity: 1;
-  transform: none;
-}
-
-.content > *:nth-child(1) { transition-delay: 0.04s; }
-.content > *:nth-child(2) { transition-delay: 0.12s; }
-.content > *:nth-child(3) { transition-delay: 0.2s; }
-.content > *:nth-child(4) { transition-delay: 0.28s; }
-.content > *:nth-child(5) { transition-delay: 0.36s; }
-
-.mock {
-  transition-delay: 0.14s;
-}
-
-/* Small ink chip standing in for a client logo. */
-.crest {
-  width: 42px;
-  height: 42px;
-  border-radius: var(--radius-sm);
-  background: var(--case-ink);
-}
+/* Entrance animation intentionally removed: card content is painted at rest,
+   so there's no fade/slide as you scroll each card into view. The only
+   scroll-driven motion left is the stacked-deck coverage (scale) below. */
 
 .title {
   font-family: var(--font-display);
-  font-size: var(--fs-xl);
+  font-size: clamp(2.4rem, 4.6vw, 4.25rem);
   font-weight: 400;
-  line-height: 0.92;
+  line-height: 0.9;
   text-transform: uppercase;
-  letter-spacing: var(--tracking-tight);
+  letter-spacing: 0.04em;
 }
 
-.titleLine {
-  display: block;
-}
-
-/* The editorial serif italic, echoing the reference's type mix. */
-.titleItalic {
-  font-family: var(--font-serif);
-  font-style: italic;
-  font-weight: 500;
-  text-transform: none;
-  letter-spacing: -0.01em;
+/* First word carries the case's signature ink. */
+.titleLead {
   color: var(--case-ink);
-}
-
-.blurb {
-  max-width: 30rem;
-  font-size: var(--fs-base);
-  line-height: 1.62;
-  color: var(--grey-600);
 }
 
 .tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  justify-content: center;
+  gap: 1.25rem;
 }
 
 .tag {
-  padding: 0.35rem 0.7rem;
-  border: 1px solid var(--divider);
-  border-radius: 999px;
-  background: var(--paper);
   font-family: var(--font-alt);
   font-size: var(--fs-xs);
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: var(--tracking-wide);
-  color: var(--grey-600);
+  letter-spacing: var(--tracking-wider);
+  color: var(--grey-400);
 }
 
 .button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
   margin-top: 0.6rem;
   padding: 0.85rem 1.6rem;
+  border: 1px solid var(--ink);
   border-radius: 999px;
-  background: var(--ink);
-  color: var(--paper);
+  background: transparent;
+  color: var(--ink);
   font-family: var(--font-alt);
   font-size: var(--fs-sm);
   font-weight: 700;
@@ -178,12 +131,24 @@
   letter-spacing: var(--tracking-wide);
   transition:
     background var(--dur-med) var(--ease-out),
+    color var(--dur-med) var(--ease-out),
     transform var(--dur-fast) var(--ease-spring);
 }
 
+.button::after {
+  content: '→';
+  font-weight: 400;
+  transition: transform var(--dur-med) var(--ease-out);
+}
+
 .button:hover {
-  background: var(--case-ink);
+  background: var(--ink);
+  color: var(--paper);
   transform: translateY(-2px);
+}
+
+.button:hover::after {
+  transform: translateX(4px);
 }
 
 /* ---- mockup column ---- */
@@ -193,22 +158,39 @@
   display: grid;
   place-items: center;
   height: 100%;
-  will-change: transform, opacity;
 }
 
 .mock img {
-  height: min(62vh, 560px);
   width: auto;
-  border-radius: var(--radius-phone);
+  height: auto;
+  border-radius: 0;
   border: 1px solid var(--divider);
   background: var(--paper);
   box-shadow: var(--shadow-phone);
-  transform: rotate(-3deg);
   transition: transform var(--dur-slow) var(--ease-out);
 }
 
-.frame:hover .mock img {
-  transform: rotate(0deg) translateY(-8px);
+/* Phone: portrait, height-driven, stronger tilt (the Android app). */
+.mockPhone img {
+  height: min(80vh, 720px);
+  transform: rotate(-11deg);
+}
+
+.frame:hover .mockPhone img {
+  transform: rotate(-7deg) translateY(-8px);
+}
+
+/* Laptop: landscape browser window, width-driven, gentler tilt (web apps).
+   The width cap also shrinks on short viewports (ratio-locked at 16:10) so the
+   image never needs a height clamp — a width+max-height pair would stretch a
+   real screenshot out of ratio. */
+.mockLaptop img {
+  width: min(100%, 660px, calc(min(66vh, 560px) * 1.6));
+  transform: rotate(-5deg);
+}
+
+.frame:hover .mockLaptop img {
+  transform: rotate(-3deg) translateY(-8px);
 }
 
 /* Ink halo behind the phone, tinted per case. */
@@ -242,8 +224,12 @@
     max-width: none;
   }
 
-  .mock img {
-    height: min(38vh, 340px);
+  .mockPhone img {
+    height: min(46vh, 420px);
+  }
+
+  .mockLaptop img {
+    width: min(100%, 560px, calc(min(46vh, 380px) * 1.6));
   }
 
   .frame {
@@ -256,11 +242,11 @@
     padding: calc(var(--header-height) + 0.75rem) 0.75rem 1.5rem;
   }
 
-  .blurb {
-    font-size: 0.875rem;
+  .mockPhone img {
+    height: min(38vh, 340px);
   }
 
-  .mock img {
-    height: min(32vh, 280px);
+  .mockLaptop img {
+    width: min(100%, calc(min(34vh, 280px) * 1.6));
   }
 }
